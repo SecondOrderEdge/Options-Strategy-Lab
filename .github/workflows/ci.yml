@@ -28,10 +28,10 @@ jobs:
         run: uv sync --extra dev
 
       - name: Ruff (lint)
-        run: uv run ruff check osl tests app.py
+        run: uv run ruff check osl tests app.py app_lib.py pages
 
       - name: Black (format check)
-        run: uv run black --check osl tests app.py
+        run: uv run black --check osl tests app.py app_lib.py pages
 
       - name: Mypy (strict, library core)
         run: uv run mypy osl
