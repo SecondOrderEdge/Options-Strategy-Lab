@@ -20,8 +20,62 @@ FloatArray = npt.NDArray[np.float64]
 
 DISCLAIMER = "Research and education only — not investment advice."
 
+# Dark "terminal" palette, kept in sync with .streamlit/config.toml and
+# app_lib._THEME_CSS. Charts are rendered with ``theme=None`` (see
+# app_lib.render_chart) so this template — not Streamlit's — drives their look.
+_INK = "#0b0c0e"
+_LINE = "#2a2d34"
+_TEXT = "#e7e3d8"
+_MUTED = "#8b8e97"
+_GOLD = "#c9a24b"
+_TEAL = "#3fb6a8"
+_RED = "#c0564b"
+_GRID = "rgba(255,255,255,0.06)"
+
+_SERIF = "Spectral, Georgia, 'Times New Roman', serif"
+_MONO = "'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace"
+
+_COLORWAY = ["#c9a24b", "#3fb6a8", "#c97b4b", "#7a8aa0", "#9d6bb0", "#b04b4b"]
+_SEQ = [
+    [0.0, "#10221f"],
+    [0.2, "#163a34"],
+    [0.4, "#1d5249"],
+    [0.6, "#2a7064"],
+    [0.8, "#3fb6a8"],
+    [1.0, "#86d8cd"],
+]
+
+_AXIS = {"gridcolor": _GRID, "zerolinecolor": _LINE, "linecolor": _LINE, "color": _MUTED}
+_SCENE_AXIS = {"gridcolor": _GRID, "backgroundcolor": "rgba(0,0,0,0)", "color": _MUTED}
+
+_DARK = go.layout.Template(
+    layout=go.Layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        colorway=_COLORWAY,
+        font={"family": _MONO, "color": _TEXT, "size": 12},
+        title={"font": {"family": _SERIF, "color": _TEXT, "size": 18}},
+        xaxis=_AXIS,
+        yaxis=_AXIS,
+        legend={"font": {"color": _TEXT}, "bgcolor": "rgba(0,0,0,0)"},
+        hoverlabel={"font": {"family": _MONO}, "bgcolor": _INK, "bordercolor": _LINE},
+        scene={"xaxis": _SCENE_AXIS, "yaxis": _SCENE_AXIS, "zaxis": _SCENE_AXIS},
+        polar={
+            "bgcolor": "rgba(0,0,0,0)",
+            "radialaxis": {"gridcolor": _GRID, "color": _MUTED},
+            "angularaxis": {"gridcolor": _GRID, "color": _MUTED},
+        },
+        colorscale={"sequential": _SEQ},
+    ),
+    data={
+        "heatmap": [go.Heatmap(colorscale=_SEQ)],
+        "surface": [go.Surface(colorscale=_SEQ)],
+    },
+)
+
 
 def _footer(fig: go.Figure, note: str = DISCLAIMER) -> go.Figure:
+    fig.update_layout(template=_DARK)
     fig.add_annotation(
         text=note,
         xref="paper",
@@ -29,7 +83,7 @@ def _footer(fig: go.Figure, note: str = DISCLAIMER) -> go.Figure:
         x=0.0,
         y=-0.18,
         showarrow=False,
-        font={"size": 10, "color": "gray"},
+        font={"size": 10, "color": _MUTED},
         align="left",
     )
     fig.update_layout(margin={"b": 80})
@@ -125,7 +179,7 @@ def vol_cone_chart(cone: pd.DataFrame, *, current: pd.Series | None = None) -> g
                 y=cone["current"],
                 mode="markers",
                 name="current RV",
-                marker={"size": 9, "color": "black"},
+                marker={"size": 9, "color": _GOLD},
             )
         )
     if current is not None:
@@ -158,7 +212,7 @@ def drawdown_chart(equity: pd.Series, *, title: str = "Drawdown") -> go.Figure:
     peak = np.maximum.accumulate(eq) if eq.size else eq
     dd = (eq - peak) / peak if eq.size else eq
     fig = go.Figure(
-        go.Scatter(x=equity.index, y=dd, mode="lines", fill="tozeroy", line={"color": "red"})
+        go.Scatter(x=equity.index, y=dd, mode="lines", fill="tozeroy", line={"color": _RED})
     )
     fig.update_layout(title=title, xaxis_title="Date", yaxis_title="Drawdown")
     return _footer(fig)
@@ -177,15 +231,13 @@ def payoff_chart(
     pnl_arr = np.asarray(pnl, dtype=float)
     profit = np.where(pnl_arr >= 0, pnl_arr, np.nan)
     loss = np.where(pnl_arr < 0, pnl_arr, np.nan)
-    fig.add_trace(
-        go.Scatter(x=spots, y=profit, mode="lines", line={"color": "green"}, name="Profit")
-    )
-    fig.add_trace(go.Scatter(x=spots, y=loss, mode="lines", line={"color": "red"}, name="Loss"))
-    fig.add_hline(y=0, line={"color": "gray", "dash": "dot"})
+    fig.add_trace(go.Scatter(x=spots, y=profit, mode="lines", line={"color": _TEAL}, name="Profit"))
+    fig.add_trace(go.Scatter(x=spots, y=loss, mode="lines", line={"color": _RED}, name="Loss"))
+    fig.add_hline(y=0, line={"color": _MUTED, "dash": "dot"})
     for be in breakevens:
-        fig.add_vline(x=be, line={"color": "blue", "dash": "dash"})
+        fig.add_vline(x=be, line={"color": _GOLD, "dash": "dash"})
     if current_spot is not None:
-        fig.add_vline(x=current_spot, line={"color": "black"}, annotation_text="spot")
+        fig.add_vline(x=current_spot, line={"color": _TEXT}, annotation_text="spot")
     fig.update_layout(title=title, xaxis_title="Terminal spot", yaxis_title="P&L ($)")
     return _footer(fig)
 

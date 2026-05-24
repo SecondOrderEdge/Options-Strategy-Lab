@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app_lib import build_candidates, candidates_table, page_footer, page_header, sidebar_controls
+from app_lib import (
+    build_candidates,
+    candidates_table,
+    page_footer,
+    page_header,
+    render_chart,
+    sidebar_controls,
+)
 from osl.strategy.optimizer import rank
 from osl.viz.charts import radar_chart
 
@@ -68,11 +75,10 @@ norm = [
     best.liquidity.score,
 ]
 st.subheader(f"Profile — {best.strategy.name}")
-st.plotly_chart(
+render_chart(
     radar_chart(
         ["POP", "EV/risk", "Theta", "Vega", "Convexity", "Liquidity"], norm, name=best.strategy.name
     ),
-    use_container_width=True,
 )
 
 with st.expander("Model assumptions"):

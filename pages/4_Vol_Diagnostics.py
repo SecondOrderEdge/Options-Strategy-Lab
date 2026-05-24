@@ -14,6 +14,7 @@ from app_lib import (
     page_footer,
     page_header,
     rate_assumptions,
+    render_chart,
     sidebar_controls,
 )
 from osl.surface.prepare import prepare_smiles
@@ -53,7 +54,7 @@ with tab_skew:
                 fits[str(s.expiration)] = fit_svi(
                     s.k, s.total_variance, weights=s.weights, T=s.T
                 ).params
-        st.plotly_chart(skew_chart(smiles, fits), use_container_width=True)
+        render_chart(skew_chart(smiles, fits))
     else:
         st.warning("No smiles available.")
 
@@ -63,7 +64,7 @@ with tab_term:
         for s in smiles:
             tenors.append(s.T)
             atm.append(float(s.iv[int(np.argmin(np.abs(s.k)))]))
-        st.plotly_chart(term_structure_chart(tenors, atm), use_container_width=True)
+        render_chart(term_structure_chart(tenors, atm))
         shape = "contango" if len(atm) > 1 and atm[-1] > atm[0] else "backwardation"
         st.caption(f"Term-structure shape: {shape} (RN, model-implied ATM IV).")
     else:
@@ -72,7 +73,7 @@ with tab_term:
 with tab_cone:
     if not history.empty:
         cone = vol_cone(history["close"])
-        st.plotly_chart(vol_cone_chart(cone), use_container_width=True)
+        render_chart(vol_cone_chart(cone))
         st.dataframe(cone, use_container_width=True)
     else:
         st.warning("No price history for the cone.")

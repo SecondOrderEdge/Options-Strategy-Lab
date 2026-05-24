@@ -9,6 +9,7 @@ from app_lib import (
     BACKTEST_SYSTEMS,
     page_footer,
     page_header,
+    render_chart,
     run_system_backtest,
     sidebar_controls,
 )
@@ -95,8 +96,8 @@ if dsr > psr:  # guard: DSR must not exceed PSR
     st.caption("note: DSR ≤ PSR by construction when trials > 1.")
 st.caption(f"Win rate {s['win_rate']:.0%} · profit factor {s['profit_factor']:.2f}")
 
-st.plotly_chart(equity_curve_chart(result.equity), use_container_width=True)
-st.plotly_chart(drawdown_chart(result.equity), use_container_width=True)
+render_chart(equity_curve_chart(result.equity))
+render_chart(drawdown_chart(result.equity))
 
 st.subheader("Trades")
 if result.trades:
