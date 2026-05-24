@@ -8,8 +8,9 @@ viz. This module is the *only* place pages touch Streamlit caching.
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import cast
+from typing import Any, cast
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -18,8 +19,13 @@ from osl.data.providers import Freshness, build_provider, freshness_badge
 from osl.strategy.enumerate import View, enumerate_candidates
 from osl.strategy.liquidity import strategy_liquidity
 from osl.strategy.metrics import compute_metrics
-from osl.strategy.optimizer import Candidate
+from osl.strategy.optimizer import Candidate, rank
 from osl.strategy.strategies import ChainContext
+from osl.surface.prepare import prepare_smiles
+from osl.volatility.garch import GarchForecast, fit_garch
+from osl.volatility.ranks import iv_percentile, iv_rank
+from osl.volatility.realized import realized_vol
+from osl.volatility.skew import delta_skew_25
 
 DISCLAIMER = "Research and education only — not investment advice."
 BADGE_COLOR = {Freshness.GREEN: "green", Freshness.AMBER: "orange", Freshness.RED: "red"}
@@ -145,6 +151,68 @@ def candidates_table(candidates: list[Candidate]) -> pd.DataFrame:
             }
         )
     return pd.DataFrame(rows)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_log_returns(provider_name: str, symbol: str) -> pd.Series:
+    hist = load_history(provider_name, symbol)
+    return cast(pd.Series, np.log(hist["close"]).diff().dropna())
+
+
+@st.cache_data(ttl=3600, show_spinner="Fitting GARCH…")
+def garch_forecast(
+    provider_name: str, symbol: str, model: str, dist: str, horizon: int
+) -> GarchForecast:
+    return fit_garch(
+        load_log_returns(provider_name, symbol),
+        model=cast("Any", model),
+        dist=cast("Any", dist),
+        horizon=horizon,
+    )
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def screen_symbol(provider_name: str, symbol: str, objective: str) -> dict[str, object]:
+    """Per-name screener row: IVR/IVP proxy, 25Δ RR, VRP, and the top strategy."""
+    chain = load_chain(provider_name, symbol)
+    under = load_underlying_dict(provider_name, symbol)
+    spot = float(under["mark"] or under["last"])
+    rate, div = rate_assumptions()
+
+    hist = load_history(provider_name, symbol)
+    rv30_series = realized_vol(hist, method="yz", window=30).dropna()
+    rv30 = float(rv30_series.iloc[-1]) if not rv30_series.empty else float("nan")
+    rv20 = realized_vol(hist, method="yz", window=20).dropna()
+
+    smiles = prepare_smiles(chain, spot=spot, rate=rate, dividend_yield=div)
+    iv30 = float("nan")
+    rr25 = float("nan")
+    if smiles:
+        nearest = min(smiles, key=lambda s: abs(s.T - 30 / 365))
+        ds = delta_skew_25(nearest)
+        iv30, rr25 = ds.atm_iv, ds.risk_reversal_25
+
+    ctx = ChainContext(chain, symbol, spot, rate, div)
+    candidates = [
+        Candidate(strat, compute_metrics(strat, n_mc=4000), strategy_liquidity(chain, strat))
+        for strat in enumerate_candidates(ctx, view="all", dte_range=(20, 60))
+    ]
+    best = rank(candidates, objective)[0] if candidates else None
+
+    return {
+        "symbol": symbol,
+        "spot": round(spot, 2),
+        "IV30": None if np.isnan(iv30) else round(iv30, 4),
+        "RV30": None if np.isnan(rv30) else round(rv30, 4),
+        "IV-RV": None if (np.isnan(iv30) or np.isnan(rv30)) else round(iv30 - rv30, 4),
+        "25dRR": None if np.isnan(rr25) else round(rr25, 4),
+        "RVrank": None if rv20.empty else round(iv_rank(rv20), 3),
+        "RVpct": None if rv20.empty else round(iv_percentile(rv20), 3),
+        "top_strategy": best.strategy.name if best else None,
+        "top_POP": round(best.metrics.pop_rn, 3) if best else None,
+        "top_EV": round(best.metrics.ev_mc.value, 2) if best else None,
+        "liquidity": round(best.liquidity.score, 2) if best else None,
+    }
 
 
 def page_header(title: str) -> None:
