@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Environments
+.venv/
+venv/
+.env
+.python-version
+
+# Secrets & tokens
+.secrets/
+*.token.json
+schwab_token.json
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Data artifacts (snapshots & raw payloads are reproducible, not source).
+# Anchored to repo root so package dirs (osl/data, tests/data) are NOT ignored.
+/data/*
+!/data/.gitkeep
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-type-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.8.17"
+
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Sync dependencies (core + dev)
+        run: uv sync --extra dev
+
+      - name: Ruff (lint)
+        run: uv run ruff check osl tests app.py
+
+      - name: Black (format check)
+        run: uv run black --check osl tests app.py
+
+      - name: Mypy (strict, library core)
+        run: uv run mypy osl
+
+      - name: Pytest
+        run: uv run pytest --cov=osl --cov-report=term-missing
