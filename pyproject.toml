@@ -41,6 +41,10 @@ ui = [
 worker = [
     "apscheduler>=3.10",
 ]
+# PDF report rendering (HTML report needs no extra). weasyprint has system deps.
+report = [
+    "weasyprint>=60",
+]
 # Developer tooling: lint, type-check, test.
 dev = [
     "pytest>=8.2",
@@ -124,6 +128,7 @@ module = [
     "QuantLib.*",
     "arch.*",
     "apscheduler.*",
+    "weasyprint.*",
 ]
 ignore_missing_imports = true
 

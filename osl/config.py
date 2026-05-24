@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     # --- Reference data ---
     fred_api_key: SecretStr | None = None
 
+    # --- Additional providers (read-only chains) ---
+    tradier_token: SecretStr | None = None
+    marketdata_token: SecretStr | None = None
+
+    # --- Single-user app lock (sha256 hex of the password; unset = no lock) ---
+    app_password_hash: SecretStr | None = None
+
     # --- Storage roots ---
     data_root: Path = Path("./data")
     snapshot_root: Path = Path("./data/snapshots")

@@ -23,7 +23,7 @@ import pandas as pd
 from pandera.pandas import Check, Column, DataFrameSchema
 
 RIGHT_VALUES = ("C", "P")
-PROVIDER_VALUES = ("schwab", "yfinance")
+PROVIDER_VALUES = ("schwab", "yfinance", "tradier", "marketdata")
 
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from osl.auth import verify_password
 from osl.backtest.config import BacktestConfig, FillModel
 from osl.backtest.demo import synthetic_history
 from osl.backtest.engine import BacktestResult, run_backtest
@@ -21,12 +22,14 @@ from osl.backtest.loader import load_snapshot_days
 from osl.backtest.rules import IronCondor1Sigma, LongStraddle, ShortPut16Delta
 from osl.config import Settings, get_settings
 from osl.data.providers import Freshness, build_provider, freshness_badge
+from osl.report.playbook import PlaybookData, StrategyRow
 from osl.strategy.enumerate import View, enumerate_candidates
 from osl.strategy.liquidity import strategy_liquidity
 from osl.strategy.metrics import compute_metrics
 from osl.strategy.optimizer import Candidate, rank
 from osl.strategy.strategies import ChainContext
 from osl.surface.prepare import prepare_smiles
+from osl.utils.time import now_utc
 from osl.volatility.garch import GarchForecast, fit_garch
 from osl.volatility.ranks import iv_percentile, iv_rank
 from osl.volatility.realized import realized_vol
@@ -251,6 +254,98 @@ def run_system_backtest(
         commission_per_contract=commission,
     )
     return run_backtest(days, BACKTEST_SYSTEMS[system_name](), config)
+
+
+def require_login() -> None:
+    """Single-user password gate. No-op when OSL_APP_PASSWORD_HASH is unset."""
+    cfg = get_settings()
+    if cfg.app_password_hash is None:
+        return
+    if st.session_state.get("_authed"):
+        return
+    pw = st.text_input("Password", type="password")
+    if st.button("Sign in"):
+        if verify_password(pw, cfg.app_password_hash.get_secret_value()):
+            st.session_state["_authed"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    if not st.session_state.get("_authed"):
+        st.stop()
+
+
+_PLAYBOOK_OBJECTIVES = ("ev_per_risk", "pop_capped", "theta_per_risk")
+
+
+def build_playbook_data(
+    provider_name: str,
+    symbol: str,
+    *,
+    view: str = "all",
+    dte_low: int = 20,
+    dte_high: int = 60,
+    max_strikes: int = 3,
+) -> PlaybookData:
+    """Assemble the per-name playbook report data from live analytics."""
+    candidates = build_candidates(provider_name, symbol, view, dte_low, dte_high, max_strikes)
+    under = load_underlying_dict(provider_name, symbol)
+    chain = load_chain(provider_name, symbol)
+    history = load_history(provider_name, symbol)
+    spot = float(under["mark"] or under["last"])
+    rate, div = rate_assumptions()
+
+    smiles = prepare_smiles(chain, spot=spot, rate=rate, dividend_yield=div)
+    iv30 = float("nan")
+    if smiles:
+        nearest = min(smiles, key=lambda s: abs(s.T - 30 / 365))
+        iv30 = float(nearest.iv[int(np.argmin(np.abs(nearest.k)))])
+    rv20 = (
+        realized_vol(history, method="yz", window=20).dropna()
+        if not history.empty
+        else pd.Series(dtype=float)
+    )
+    ivr = iv_rank(rv20) if not rv20.empty else float("nan")
+    ivp = iv_percentile(rv20) if not rv20.empty else float("nan")
+
+    rows: list[StrategyRow] = []
+    for obj in _PLAYBOOK_OBJECTIVES:
+        if not candidates:
+            break
+        best = rank(candidates, obj)[0]
+        m = best.metrics
+        rows.append(
+            StrategyRow(
+                name=best.strategy.name,
+                objective=obj,
+                expiry=min(leg.expiration for leg in best.strategy.legs).isoformat(),
+                pop_rn=m.pop_rn,
+                ev=m.ev_mc.value,
+                expected_shortfall=m.expected_shortfall,
+                max_loss=m.max_loss,
+                loss_unbounded=m.loss_unbounded,
+                liquidity=best.liquidity.score,
+                breakevens=m.breakevens,
+            )
+        )
+
+    return PlaybookData(
+        symbol=symbol,
+        spot=spot,
+        as_of=now_utc(),
+        iv30=iv30,
+        iv_rank=ivr,
+        iv_percentile=ivp,
+        surface_note=f"{len(smiles)} expiries fit; "
+        + ("no butterfly arbitrage flagged." if smiles else "no liquid smile."),
+        strategies=rows,
+        assumptions=[
+            "POP is risk-neutral lognormal; the delta proxy overstates it.",
+            "EV is risk-neutral Monte Carlo (edge vs fair value), shown with a tail-loss (ES) companion.",
+            "IV rank/percentile use realized vol as a stand-in until IV history accumulates.",
+            "Liquidity blends spread, open interest, volume, and ATM distance.",
+            "Research and education only — not investment advice.",
+        ],
+    )
 
 
 def page_header(title: str) -> None:

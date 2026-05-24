@@ -1,0 +1,30 @@
+name: Nightly
+
+# Full test suite + benchmark suite, run nightly and on demand.
+on:
+  schedule:
+    - cron: "0 6 * * *"  # 06:00 UTC daily
+  workflow_dispatch:
+
+jobs:
+  test-and-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.8.17"
+
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Sync dependencies (core + dev)
+        run: uv sync --extra dev
+
+      - name: Pytest (with coverage)
+        run: uv run pytest --cov=osl --cov-report=term-missing
+
+      - name: Benchmark suite
+        run: uv run python -m osl.bench
