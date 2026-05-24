@@ -177,6 +177,42 @@ def pop_monte_carlo(strategy: Strategy, sigma: float, *, n: int = 50_000, seed: 
     return float(np.mean(strategy.pnl(s_t) > 0))
 
 
+def pop_garch(
+    strategy: Strategy,
+    garch_vol: float,
+    *,
+    mu: float | None = None,
+    n: int = 50_000,
+    seed: int = 42,
+) -> float:
+    """P-measure POP using a GARCH volatility forecast and a real-world drift.
+
+    ``mu`` is the annual drift (defaults to the risk-free rate as a neutral
+    choice; pass the historical mean return for a true real-world view).
+    """
+    if not math.isfinite(garch_vol) or garch_vol <= 0:
+        return float("nan")
+    rng = np.random.default_rng(seed)
+    T = strategy.primary_T
+    drift = strategy.rate if mu is None else mu
+    z = rng.standard_normal(n)
+    s_t = strategy.spot * np.exp((drift - 0.5 * garch_vol**2) * T + garch_vol * math.sqrt(T) * z)
+    return float(np.mean(strategy.pnl(s_t) > 0))
+
+
+def blended_pop(rn_pop: float, p_pop: float, *, rn_weight: float = 0.5) -> float:
+    """Convex blend of risk-neutral and real-world POP (experimental).
+
+    A pragmatic stand-in for a full Bayesian update: ``rn_weight`` on the RN
+    prior, the remainder on the P-measure likelihood. Gate behind
+    ``enable_experimental`` and always show the components alongside it.
+    """
+    if not (math.isfinite(rn_pop) and math.isfinite(p_pop)):
+        return float("nan")
+    w = min(max(rn_weight, 0.0), 1.0)
+    return w * rn_pop + (1.0 - w) * p_pop
+
+
 def pop_empirical(
     strategy: Strategy, log_returns: pd.Series, *, n: int = 50_000, seed: int = 42
 ) -> float:

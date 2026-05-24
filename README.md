@@ -8,7 +8,21 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M3 — Payoff & scenario analysis
+## Status: M4 — Probability Lab & Watchlist Screener
+
+Adds real-world probability tooling and a multi-name screener:
+
+- **`osl.volatility.garch`** — GARCH(1,1) / GJR-GARCH (normal or Student-t) via
+  `arch`, reporting persistence and an annualized vol forecast.
+- **`osl.volatility.skew` / `osl.volatility.vrp`** — 25Δ risk reversal &
+  butterfly from a smile, and a variance-risk-premium proxy.
+- **`osl.strategy.metrics`** — P-measure POP from a GARCH σ-forecast and a
+  (gated, experimental) Bayesian-blended POP alongside the RN measures.
+- **Pages 8 & 10** — Probability Lab (POP by measure, EV ± CI, market-implied
+  RND vs lognormal) and the Watchlist Screener (per-name IV/RV, 25Δ RR, VRP,
+  top strategy per objective).
+
+### M3 — Payoff & scenario analysis
 
 Adds intermediate-time valuation and scenario tooling on top of the M2 engine:
 

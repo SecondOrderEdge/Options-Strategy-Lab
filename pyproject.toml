@@ -23,6 +23,7 @@ dependencies = [
     "requests>=2.31",
     "zstandard>=0.22",
     "vollib>=1.0.7",
+    "arch>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -117,6 +118,7 @@ module = [
     "vollib.*",
     "py_vollib.*",
     "QuantLib.*",
+    "arch.*",
 ]
 ignore_missing_imports = true
 
