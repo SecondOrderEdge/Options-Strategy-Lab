@@ -8,7 +8,23 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: Snapshot worker
+## Status: M6 — Advanced models (gated)
+
+Experimental research models behind `OSL_ENABLE_EXPERIMENTAL`:
+
+- **`osl.models.heston`** — QuantLib Heston pricing + Levenberg-Marquardt
+  calibration to a smile (collapses to BSM as vol-of-vol -> 0).
+- **`osl.models.jump_diffusion`** — Merton jump-diffusion closed form
+  (collapses to BSM as the jump intensity -> 0; fattens tails otherwise).
+- **`osl.models.local_vol`** — Dupire local-vol surface via QuantLib (read-only).
+- **`osl.surface.pca`** — PCA of accumulated surface changes into level / slope /
+  curvature factors (Cont & da Fonseca 2002).
+- **Page 11** — Advanced Models (gated): Heston fit, Merton overlay, Dupire
+  heatmap, and a surface-PCA demo.
+
+QuantLib is now a core dependency.
+
+### Snapshot worker
 
 Captures the chain history the backtester runs on:
 

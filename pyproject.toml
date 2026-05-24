@@ -24,6 +24,7 @@ dependencies = [
     "zstandard>=0.22",
     "vollib>=1.0.7",
     "arch>=6.0",
+    "QuantLib>=1.30",
 ]
 
 [project.optional-dependencies]
@@ -52,7 +53,6 @@ dev = [
     "pandas-stubs",
     "scipy-stubs",
     "pre-commit>=3.7",
-    "QuantLib>=1.30",  # European-pricing cross-check in tests only
     "plotly>=5.22",  # exercise viz chart builders in CI
 ]
 
