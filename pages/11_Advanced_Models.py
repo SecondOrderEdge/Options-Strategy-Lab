@@ -87,9 +87,7 @@ with tab_h:
         trend = (
             "rise toward it"
             if p.theta > p.v0
-            else "fall toward it"
-            if p.theta < p.v0
-            else "stay near it"
+            else "fall toward it" if p.theta < p.v0 else "stay near it"
         )
         if p.rho < -0.05:
             rho_txt = "spot falls → vol rises (leverage effect), producing a **downside put skew**."
