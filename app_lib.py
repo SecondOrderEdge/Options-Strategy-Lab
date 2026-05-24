@@ -7,6 +7,7 @@ viz. This module is the *only* place pages touch Streamlit caching.
 
 from __future__ import annotations
 
+import os
 from datetime import date, timedelta
 from typing import Any, cast
 
@@ -37,6 +38,25 @@ from osl.volatility.skew import delta_skew_25
 
 DISCLAIMER = "Research and education only — not investment advice."
 BADGE_COLOR = {Freshness.GREEN: "green", Freshness.AMBER: "orange", Freshness.RED: "red"}
+
+
+def _load_streamlit_secrets_into_env() -> None:
+    """Bridge Streamlit Cloud secrets into env vars so Settings (OSL_*) reads them.
+
+    Streamlit Cloud exposes config via ``st.secrets``; pydantic-settings reads
+    environment variables. Copying OSL_-prefixed secrets across (without
+    overriding an already-set env var) makes both deployment models work.
+    """
+    try:
+        secrets = dict(st.secrets)
+    except Exception:  # no secrets configured (e.g. local run) — fine
+        return
+    for key, value in secrets.items():
+        if isinstance(key, str) and isinstance(value, str):
+            os.environ.setdefault(key, value)
+
+
+_load_streamlit_secrets_into_env()
 
 
 def settings() -> Settings:

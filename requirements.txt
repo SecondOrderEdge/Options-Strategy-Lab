@@ -1,0 +1,7 @@
+# Streamlit Community Cloud installs dependencies with pip (not uv), so it reads
+# this file. Installing the project with the `ui` (streamlit/plotly) and `data`
+# (yfinance) extras pulls in every runtime dependency.
+#
+# Pin the Python version to 3.11 in the app's Advanced settings — the vollib
+# "Let's Be Rational" stack requires numpy < 2.
+.[ui,data]
