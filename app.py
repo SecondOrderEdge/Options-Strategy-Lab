@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app_lib import DISCLAIMER, require_login
+from app_lib import DISCLAIMER, inject_theme, require_login
 
 st.set_page_config(page_title="Options Strategy Lab", layout="wide")
+inject_theme()
 require_login()
 
 st.title("Options Strategy Lab")

@@ -37,7 +37,137 @@ from osl.volatility.realized import realized_vol
 from osl.volatility.skew import delta_skew_25
 
 DISCLAIMER = "Research and education only — not investment advice."
-BADGE_COLOR = {Freshness.GREEN: "green", Freshness.AMBER: "orange", Freshness.RED: "red"}
+BADGE_PILL = {Freshness.GREEN: "green", Freshness.AMBER: "amber", Freshness.RED: "red"}
+
+# Dark "terminal" aesthetic. The Streamlit [theme] in .streamlit/config.toml sets
+# the palette; this stylesheet layers on the things native theming can't express:
+# the serif/mono font pairing, card tiles, uppercase letter-spaced labels,
+# gold-outline buttons, styled tabs, a dark sidebar, and the freshness pills.
+_THEME_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Spectral:wght@400;500;600&display=swap');
+
+:root {
+  --osl-gold: #c9a24b;
+  --osl-teal: #3fb6a8;
+  --osl-red:  #c0564b;
+  --osl-ink:  #0b0c0e;
+  --osl-card: #14161b;
+  --osl-line: #2a2d34;
+  --osl-muted:#8b8e97;
+  --osl-text: #e7e3d8;
+}
+
+.stApp { background: var(--osl-ink); }
+[data-testid="stHeader"] { background: transparent; }
+.block-container { padding-top: 2.5rem; padding-bottom: 3rem; max-width: 1280px; }
+
+h1, h2, h3, h4,
+[data-testid="stHeading"] h1,
+[data-testid="stHeading"] h2,
+[data-testid="stHeading"] h3 {
+  font-family: 'Spectral', Georgia, 'Times New Roman', serif !important;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: var(--osl-text);
+}
+h1 { font-size: 2.1rem; }
+
+[data-testid="stCaptionContainer"], .stCaption, small {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+  color: var(--osl-muted) !important;
+  letter-spacing: 0.02em;
+}
+
+[data-testid="stWidgetLabel"] label,
+[data-testid="stMetricLabel"] {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 0.72rem !important;
+  color: var(--osl-muted) !important;
+}
+
+[data-testid="stMetric"] {
+  background: var(--osl-card);
+  border: 1px solid var(--osl-line);
+  border-radius: 6px;
+  padding: 1rem 1.1rem;
+}
+[data-testid="stMetricValue"] {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+  color: var(--osl-gold);
+  font-weight: 600;
+}
+
+[data-baseweb="tab-list"] { border-bottom: 1px solid var(--osl-line); gap: 1.5rem; }
+[data-baseweb="tab"] {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.74rem;
+  color: var(--osl-muted);
+  background: transparent;
+}
+[data-baseweb="tab"][aria-selected="true"] { color: var(--osl-gold); }
+[data-baseweb="tab-highlight"] { background-color: var(--osl-gold) !important; }
+
+.stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
+  background: transparent;
+  border: 1px solid var(--osl-gold);
+  color: var(--osl-gold);
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
+  background: var(--osl-gold);
+  color: var(--osl-ink);
+  border-color: var(--osl-gold);
+}
+
+[data-testid="stSidebar"] {
+  background: #0e1014;
+  border-right: 1px solid var(--osl-line);
+}
+
+[data-testid="stExpander"],
+[data-testid="stVerticalBlockBorderWrapper"] {
+  border: 1px solid var(--osl-line) !important;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.012);
+}
+
+hr { border-color: var(--osl-line); }
+
+.osl-pill {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.12rem 0.55rem;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+}
+.osl-pill--green { color: var(--osl-teal); }
+.osl-pill--amber { color: var(--osl-gold); }
+.osl-pill--red   { color: var(--osl-red); }
+.osl-badge-meta {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  color: var(--osl-muted);
+  font-size: 0.78rem;
+  margin-left: 0.4rem;
+}
+"""
+
+
+def inject_theme() -> None:
+    """Inject the dark/gold stylesheet. Call once per page run (idempotent per run)."""
+    st.markdown(f"<style>{_THEME_CSS}</style>", unsafe_allow_html=True)
 
 
 def _load_streamlit_secrets_into_env() -> None:
@@ -115,10 +245,12 @@ def load_history(provider_name: str, symbol: str, lookback_days: int = 400) -> p
 
 def render_badge(provider_name: str, *, is_delayed: bool, quote_time: pd.Timestamp) -> None:
     badge = freshness_badge(provider_name, is_delayed=is_delayed, quote_time=quote_time)
-    color = BADGE_COLOR[badge]
+    cls = BADGE_PILL[badge]
+    ts = f"{pd.Timestamp(quote_time):%Y-%m-%d %H:%M:%S %Z}"
     st.markdown(
-        f":{color}[**{badge.value}**] — {provider_name} @ "
-        f"{pd.Timestamp(quote_time):%Y-%m-%d %H:%M:%S %Z}"
+        f'<span class="osl-pill osl-pill--{cls}">{badge.value}</span>'
+        f'<span class="osl-badge-meta">{provider_name} @ {ts}</span>',
+        unsafe_allow_html=True,
     )
 
 
@@ -369,6 +501,7 @@ def build_playbook_data(
 
 
 def page_header(title: str) -> None:
+    inject_theme()
     st.title(title)
     st.caption(DISCLAIMER)
 

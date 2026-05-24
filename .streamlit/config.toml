@@ -1,6 +1,19 @@
 [theme]
-base = "light"
-primaryColor = "#1f77b4"
+# Dark "terminal" aesthetic: near-black canvas, muted gold accent, warm off-white
+# text, teal as the secondary chart hue. Fonts/cards/pills are layered on via CSS
+# injected in app_lib.inject_theme() (Streamlit theming alone can't express them).
+base = "dark"
+primaryColor = "#c9a24b"
+backgroundColor = "#0b0c0e"
+secondaryBackgroundColor = "#14161b"
+textColor = "#e7e3d8"
+borderColor = "#2a2d34"
+linkColor = "#c9a24b"
+baseRadius = "0.25rem"
+# Accent palette for built-in charts (st.line_chart / st.bar_chart) and Plotly
+# rendered with the Streamlit theme.
+chartCategoricalColors = ["#c9a24b", "#3fb6a8", "#c97b4b", "#7a8aa0", "#9d6bb0", "#b04b4b"]
+chartSequentialColors = ["#10221f", "#163a34", "#1d5249", "#2a7064", "#3fb6a8", "#86d8cd"]
 
 [server]
 # Streamlit Community Cloud manages the server; these are safe local defaults.
