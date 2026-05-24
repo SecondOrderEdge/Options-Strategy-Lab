@@ -55,10 +55,21 @@ investment advice. Every output is traceable to a model and a data snapshot.
 - Risk-free rate is a flat configured value in M1; FRED curves and per-name
   dividends arrive later.
 
-### Not yet built (later milestones)
+### Current limitations
 
-Strategy generation/optimization, payoff & scenario analysis, the probability
-lab, GARCH forecasts, PCA/Heston, and the snapshot-driven backtester.
+These features ship today but with caveats worth knowing:
+
+- **Experimental models** (Heston, Merton jumps, Dupire local vol, surface PCA)
+  are gated behind `OSL_ENABLE_EXPERIMENTAL` and can be weakly identified on
+  sparse chains — read each tab's notes.
+- **Surface PCA** shows a synthetic 3-factor demo until a multi-day IV-snapshot
+  history accumulates.
+- **IV rank / percentile** use realized vol as a stand-in until a daily IV
+  history accumulates.
+- **Backtests** use synthetic GBM demo data unless real chain snapshots have
+  been captured (run the snapshot worker); results are illustrative until then.
+- **Risk-free rate** is a flat configured value; FRED Treasury curves and
+  per-name dividend yields arrive later.
 """)
 
 st.markdown("""
