@@ -1,0 +1,54 @@
+name: Snapshot
+
+# Capture option-chain snapshots 3x/day. GitHub cron is UTC and cannot follow
+# DST, so these UTC times are chosen to fall inside US regular trading hours for
+# both EST and EDT (the worker itself skips weekends/holidays):
+#   14:35 UTC  = 10:35 EDT / 09:35 EST   (~open)
+#   17:00 UTC  = 13:00 EDT / 12:00 EST   (midday)
+#   19:45 UTC  = 15:45 EDT / 14:45 EST   (~close)
+#
+# Persistence note: this template uploads the Parquet store as a build artifact.
+# For a durable history (what the backtester needs), run the daemon
+# (`python -m osl.data.snapshot_worker --daemon`) on a host with persistent disk,
+# or point OSL_SNAPSHOT_ROOT at mounted/cloud storage.
+
+on:
+  schedule:
+    - cron: "35 14 * * 1-5"
+    - cron: "0 17 * * 1-5"
+    - cron: "45 19 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    env:
+      OSL_DEFAULT_PROVIDER: ${{ vars.OSL_DEFAULT_PROVIDER || 'yfinance' }}
+      OSL_WATCHLIST: ${{ vars.OSL_WATCHLIST || 'SPY,QQQ,IWM' }}
+      OSL_SNAPSHOT_ROOT: ./data/snapshots
+      # Schwab (optional): also requires a persisted OAuth token; yfinance is keyless.
+      OSL_SCHWAB_APP_KEY: ${{ secrets.OSL_SCHWAB_APP_KEY }}
+      OSL_SCHWAB_APP_SECRET: ${{ secrets.OSL_SCHWAB_APP_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.8.17"
+
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Sync dependencies (data extra for yfinance)
+        run: uv sync --extra data
+
+      - name: Capture snapshots
+        run: uv run python -m osl.data.snapshot_worker --once
+
+      - name: Upload snapshot store
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots-${{ github.run_id }}
+          path: data/snapshots
+          if-no-files-found: warn
