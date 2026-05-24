@@ -25,6 +25,10 @@ dependencies = [
     "vollib>=1.0.7",
     "arch>=6.0",
     "QuantLib>=1.30",
+    # Included in core (not just extras) so the Streamlit app deploys correctly
+    # regardless of installer (pip requirements vs uv/pyproject).
+    "plotly>=5.22",
+    "yfinance>=0.2.40",
 ]
 
 [project.optional-dependencies]

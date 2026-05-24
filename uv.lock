@@ -732,6 +732,7 @@ dependencies = [
     { name = "pandas" },
     { name = "pandas-market-calendars" },
     { name = "pandera" },
+    { name = "plotly" },
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -740,6 +741,7 @@ dependencies = [
     { name = "scipy" },
     { name = "structlog" },
     { name = "vollib" },
+    { name = "yfinance" },
     { name = "zstandard" },
 ]
 
@@ -784,6 +786,7 @@ requires-dist = [
     { name = "pandas-market-calendars", specifier = ">=4.3" },
     { name = "pandas-stubs", marker = "extra == 'dev'" },
     { name = "pandera", specifier = ">=0.20" },
+    { name = "plotly", specifier = ">=5.22" },
     { name = "plotly", marker = "extra == 'dev'", specifier = ">=5.22" },
     { name = "plotly", marker = "extra == 'ui'", specifier = ">=5.22" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.7" },
@@ -802,6 +805,7 @@ requires-dist = [
     { name = "types-requests", marker = "extra == 'dev'" },
     { name = "vollib", specifier = ">=1.0.7" },
     { name = "weasyprint", marker = "extra == 'report'", specifier = ">=60" },
+    { name = "yfinance", specifier = ">=0.2.40" },
     { name = "yfinance", marker = "extra == 'data'", specifier = ">=0.2.40" },
     { name = "zstandard", specifier = ">=0.22" },
 ]
