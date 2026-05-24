@@ -6,7 +6,14 @@ import math
 
 import streamlit as st
 
-from app_lib import build_candidates, candidates_table, page_footer, page_header, sidebar_controls
+from app_lib import (
+    build_candidates,
+    candidates_table,
+    page_footer,
+    page_header,
+    render_chart,
+    sidebar_controls,
+)
 from osl.strategy.optimizer import OBJECTIVES, rank
 from osl.viz.charts import scatter_chart
 
@@ -59,7 +66,7 @@ if bounded:
 
     col1, col2 = st.columns(2)
     with col1:
-        st.plotly_chart(
+        render_chart(
             scatter_chart(
                 risk,
                 ev,
@@ -68,10 +75,9 @@ if bounded:
                 y_title="EV ($)",
                 title="EV frontier",
             ),
-            use_container_width=True,
         )
     with col2:
-        st.plotly_chart(
+        render_chart(
             scatter_chart(
                 risk,
                 pop,
@@ -80,7 +86,6 @@ if bounded:
                 y_title="POP (RN)",
                 title="POP vs max loss",
             ),
-            use_container_width=True,
         )
 
 st.caption(

@@ -14,6 +14,7 @@ from app_lib import (
     page_header,
     rate_assumptions,
     render_badge,
+    render_chart,
     sidebar_controls,
 )
 from osl.surface.prepare import prepare_smiles
@@ -59,7 +60,7 @@ with col3:
     )
 
 if not history.empty:
-    st.plotly_chart(price_history_chart(history, title=f"{symbol} close"), use_container_width=True)
+    render_chart(price_history_chart(history, title=f"{symbol} close"))
 else:
     st.warning("No price history returned.")
 

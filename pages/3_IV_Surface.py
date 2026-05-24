@@ -11,6 +11,7 @@ from app_lib import (
     page_footer,
     page_header,
     rate_assumptions,
+    render_chart,
     sidebar_controls,
 )
 from osl.surface.prepare import prepare_smiles
@@ -68,11 +69,11 @@ for smile in smiles:
 
 view = st.radio("View", ["Skew (2D)", "Surface (3D)", "Heatmap"], horizontal=True)
 if view == "Skew (2D)":
-    st.plotly_chart(skew_chart(smiles, fits), use_container_width=True)
+    render_chart(skew_chart(smiles, fits))
 elif view == "Surface (3D)":
-    st.plotly_chart(iv_surface_3d(smiles), use_container_width=True)
+    render_chart(iv_surface_3d(smiles))
 else:
-    st.plotly_chart(iv_heatmap(smiles), use_container_width=True)
+    render_chart(iv_heatmap(smiles))
 
 st.subheader("SVI parameters per expiry")
 params_df = pd.DataFrame(rows)

@@ -13,6 +13,7 @@ from app_lib import (
     page_footer,
     page_header,
     rate_assumptions,
+    render_chart,
     settings,
     sidebar_controls,
 )
@@ -130,9 +131,8 @@ if smile is not None and len(smile) >= 5:
         k_max=1.5,
         n=800,
     )
-    st.plotly_chart(
+    render_chart(
         rnd_chart(strikes, normalize(strikes, dens), lognormal=normalize(ln_strikes, ln_dens)),
-        use_container_width=True,
     )
 else:
     st.info("Not enough liquid strikes to build a market-implied RND for this expiry.")

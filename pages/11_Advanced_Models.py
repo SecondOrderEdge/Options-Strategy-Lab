@@ -16,6 +16,7 @@ from app_lib import (
     page_footer,
     page_header,
     rate_assumptions,
+    render_chart,
     settings,
     sidebar_controls,
 )
@@ -130,7 +131,7 @@ with tab_lv:
     lv = dupire_local_vol(
         expiries, grid_strikes.tolist(), iv_grid, spot=spot, rate=rate, dividend_yield=div
     )
-    st.plotly_chart(
+    render_chart(
         heatmap_chart(
             lv,
             x=[round(t, 3) for t in expiries],
@@ -140,7 +141,6 @@ with tab_lv:
             title="Dupire local volatility",
             colorbar_title="local vol",
         ),
-        use_container_width=True,
     )
 
 with tab_pca:

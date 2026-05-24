@@ -170,6 +170,17 @@ def inject_theme() -> None:
     st.markdown(f"<style>{_THEME_CSS}</style>", unsafe_allow_html=True)
 
 
+def render_chart(fig: Any, **kwargs: Any) -> None:
+    """Render a Plotly figure using its own dark template instead of Streamlit's.
+
+    Passing ``theme=None`` lets the template defined in ``osl.viz.charts`` (dark
+    background, gold/teal palette) drive the look; Streamlit's default
+    ``theme="streamlit"`` would otherwise override it.
+    """
+    kwargs.setdefault("use_container_width", True)
+    st.plotly_chart(fig, theme=None, **kwargs)
+
+
 def _load_streamlit_secrets_into_env() -> None:
     """Bridge Streamlit Cloud secrets into env vars so Settings (OSL_*) reads them.
 
@@ -194,16 +205,19 @@ def settings() -> Settings:
 
 
 def sidebar_controls(default_symbol: str = "SPY") -> tuple[str, str]:
-    """Render the shared sidebar; return (symbol, provider_name)."""
+    """Render the shared sidebar; return (symbol, provider_name).
+
+    The symbol and provider are stored in ``st.session_state`` under stable
+    keys, so a ticker set on one page carries across the whole app for the
+    session. Seed defaults only on first use (don't clobber the user's choice).
+    """
     cfg = get_settings()
+    st.session_state.setdefault("symbol", default_symbol)
+    st.session_state.setdefault("provider", cfg.default_provider)
     with st.sidebar:
         st.header("Data")
-        symbol = st.text_input("Symbol", value=default_symbol).strip().upper()
-        provider = st.radio(
-            "Provider",
-            options=["schwab", "yfinance"],
-            index=0 if cfg.default_provider == "schwab" else 1,
-        )
+        symbol = st.text_input("Symbol", key="symbol").strip().upper()
+        provider = st.radio("Provider", options=["schwab", "yfinance"], key="provider")
     return symbol, provider
 
 

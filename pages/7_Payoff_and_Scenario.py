@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from app_lib import build_candidates, page_footer, page_header, sidebar_controls
+from app_lib import build_candidates, page_footer, page_header, render_chart, sidebar_controls
 from osl.scenario.payoff import payoff_curve
 from osl.scenario.pnl_surface import pnl_grid
 from osl.scenario.stress import stress_scenarios
@@ -69,14 +69,14 @@ if shock_days > 0 or vol_shock != 0:
         x=spots,
         y=pnl_now,
         mode="lines",
-        line={"dash": "dash", "color": "purple"},
+        line={"dash": "dash", "color": "#9d6bb0"},
         name=f"+{shock_days}d, {vol_shock_pts:+d} vol pts",
     )
-st.plotly_chart(fig, use_container_width=True)
+render_chart(fig)
 
 st.subheader("P&L surface (spot × time)")
 sg, dg, z = pnl_grid(strategy, spot_shocks=np.linspace(-0.3, 0.3, 31), vol_shock=vol_shock)
-st.plotly_chart(pnl_surface_chart(sg, dg, z), use_container_width=True)
+render_chart(pnl_surface_chart(sg, dg, z))
 
 st.subheader("Stress scenarios")
 iv_crush = st.slider("Earnings IV crush (vol points)", -40, 0, -20) / 100.0
