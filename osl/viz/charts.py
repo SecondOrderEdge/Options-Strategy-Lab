@@ -145,6 +145,39 @@ def iv_vs_rv_chart(iv: pd.Series, rv: pd.Series) -> go.Figure:
     return _footer(fig)
 
 
+def scatter_chart(
+    x: Sequence[float],
+    y: Sequence[float],
+    *,
+    labels: Sequence[str] | None = None,
+    x_title: str,
+    y_title: str,
+    title: str,
+) -> go.Figure:
+    """Generic labelled scatter (EV-vs-risk frontier, POP-vs-risk, etc.)."""
+    fig = go.Figure(
+        go.Scatter(
+            x=list(x),
+            y=list(y),
+            mode="markers",
+            text=list(labels) if labels is not None else None,
+            hovertemplate="%{text}<br>" + x_title + ": %{x:.3f}<br>" + y_title + ": %{y:.3f}",
+            marker={"size": 10},
+        )
+    )
+    fig.update_layout(title=title, xaxis_title=x_title, yaxis_title=y_title)
+    return _footer(fig)
+
+
+def radar_chart(categories: Sequence[str], values: Sequence[float], *, name: str) -> go.Figure:
+    """Normalized strategy radar (POP, EV, theta, vega, convexity, liquidity)."""
+    cats = [*categories, categories[0]]
+    vals = [*values, values[0]]
+    fig = go.Figure(go.Scatterpolar(r=vals, theta=cats, fill="toself", name=name))
+    fig.update_layout(title=name, polar={"radialaxis": {"visible": True, "range": [0, 1]}})
+    return _footer(fig)
+
+
 def rnd_chart(
     strikes: FloatArray,
     density: FloatArray,

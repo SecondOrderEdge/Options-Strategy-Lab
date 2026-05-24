@@ -58,6 +58,19 @@ def test_all_charts_build_with_data():
         charts.vol_cone_chart(cone),
         charts.iv_vs_rv_chart(pd.Series([0.2, 0.21]), pd.Series([0.18, 0.19])),
         charts.rnd_chart(strikes, density),
+        charts.scatter_chart(
+            [1.0, 2.0, 3.0],
+            [0.1, 0.2, 0.3],
+            labels=["a", "b", "c"],
+            x_title="risk",
+            y_title="ev",
+            title="frontier",
+        ),
+        charts.radar_chart(
+            ["POP", "EV", "Theta", "Vega", "Convexity", "Liquidity"],
+            [0.6, 0.4, 0.3, 0.5, 0.2, 0.8],
+            name="Iron Condor",
+        ),
     ]
     for fig in figs:
         assert len(fig.data) >= 1
