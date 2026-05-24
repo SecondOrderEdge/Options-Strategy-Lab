@@ -8,7 +8,20 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M5 — Backtester
+## Status: Snapshot worker
+
+Captures the chain history the backtester runs on:
+
+- **`osl.data.snapshot_worker`** — pulls each watchlist symbol's chain +
+  underlying through a provider and writes a Hive-partitioned Parquet snapshot.
+  Per-symbol failures are isolated; non-trading days are skipped.
+- **CLI** — `python -m osl.data.snapshot_worker --once` (for a cron / GitHub
+  Action) or `--daemon` (APScheduler at 09:35 / 12:30 / 15:55 ET).
+- **`OSL_WATCHLIST`** setting (comma-separated) selects the symbols.
+- **`.github/workflows/snapshot.yml`** — a cron template (UTC times inside RTH
+  for both EST/EDT) that captures and uploads the store as an artifact.
+
+### M5 — Backtester
 
 Adds a snapshot-driven backtester with overfitting-aware statistics:
 

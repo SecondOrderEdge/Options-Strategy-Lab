@@ -35,3 +35,9 @@ def test_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_iv_lookback_must_be_positive() -> None:
     with pytest.raises(ValueError):
         Settings(_env_file=None, iv_lookback_days=0)  # type: ignore[call-arg]
+
+
+def test_watchlist_default_and_comma_parsing(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert Settings(_env_file=None).watchlist == ["SPY", "QQQ", "IWM"]  # type: ignore[call-arg]
+    monkeypatch.setenv("OSL_WATCHLIST", "aapl, msft ,nvda")
+    assert Settings(_env_file=None).watchlist == ["AAPL", "MSFT", "NVDA"]  # type: ignore[call-arg]

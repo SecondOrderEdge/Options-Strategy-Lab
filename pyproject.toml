@@ -36,6 +36,10 @@ ui = [
     "streamlit>=1.36",
     "plotly>=5.22",
 ]
+# Snapshot worker daemon scheduler (the --once CLI needs no extra).
+worker = [
+    "apscheduler>=3.10",
+]
 # Developer tooling: lint, type-check, test.
 dev = [
     "pytest>=8.2",
@@ -119,6 +123,7 @@ module = [
     "py_vollib.*",
     "QuantLib.*",
     "arch.*",
+    "apscheduler.*",
 ]
 ignore_missing_imports = true
 

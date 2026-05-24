@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, SecretStr, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -49,8 +49,18 @@ class Settings(BaseSettings):
     default_provider: Literal["schwab", "yfinance"] = "schwab"
     iv_lookback_days: int = Field(default=252, gt=0)
 
+    # Symbols the snapshot worker captures (comma-separated in the env).
+    watchlist: Annotated[list[str], NoDecode] = ["SPY", "QQQ", "IWM"]
+
     # Gate v2 / experimental features.
     enable_experimental: bool = False
+
+    @field_validator("watchlist", mode="before")
+    @classmethod
+    def _parse_watchlist(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [s.strip().upper() for s in value.split(",") if s.strip()]
+        return value
 
     @property
     def raw_data_root(self) -> Path:
