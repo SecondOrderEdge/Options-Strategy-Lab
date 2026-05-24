@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from osl.surface.interpolate import VarianceSpline
+from osl.surface.pca import SurfacePCA, surface_pca
 from osl.surface.prepare import Smile, prepare_smile, prepare_smiles
 from osl.surface.rnd import risk_neutral_density
 from osl.surface.svi import (
@@ -18,6 +19,7 @@ __all__ = [
     "SVIFit",
     "SVIParams",
     "Smile",
+    "SurfacePCA",
     "VarianceSpline",
     "butterfly_min_g",
     "calendar_arbitrage_free",
@@ -26,4 +28,5 @@ __all__ = [
     "prepare_smile",
     "prepare_smiles",
     "risk_neutral_density",
+    "surface_pca",
 ]

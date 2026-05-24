@@ -226,6 +226,22 @@ def scatter_chart(
     return _footer(fig)
 
 
+def heatmap_chart(
+    z: FloatArray,
+    *,
+    x: Sequence[float],
+    y: Sequence[float],
+    x_title: str,
+    y_title: str,
+    title: str,
+    colorbar_title: str = "",
+) -> go.Figure:
+    """Generic heatmap (e.g. Dupire local vol over strike × expiry)."""
+    fig = go.Figure(go.Heatmap(z=z, x=list(x), y=list(y), colorbar={"title": colorbar_title}))
+    fig.update_layout(title=title, xaxis_title=x_title, yaxis_title=y_title)
+    return _footer(fig)
+
+
 def radar_chart(categories: Sequence[str], values: Sequence[float], *, name: str) -> go.Figure:
     """Normalized strategy radar (POP, EV, theta, vega, convexity, liquidity)."""
     cats = [*categories, categories[0]]
