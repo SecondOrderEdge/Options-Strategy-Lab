@@ -83,10 +83,10 @@ ignore = [
 allowed-confusables = ["σ", "×", "−", "ρ", "ν", "φ", "√", "≤", "≥", "∂", "µ", "²", "Δ", "Γ", "Θ", "₁", "₂"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["osl", "app_lib"]
+known-first-party = ["osl", "app_lib", "tests"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["B011"]
+"tests/**" = ["B011", "RUF059"]
 
 # ---------------------------------------------------------------------------
 # Black

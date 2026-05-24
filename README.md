@@ -8,7 +8,28 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M1 — Per-name volatility diagnostics
+## Status: M2 — Strategy engine & optimizer
+
+Adds the multi-leg strategy engine on top of M1's pricing/vol/surface library:
+
+- **Legs & strategies** (`osl.strategy`) — `Leg`/`Strategy` dataclasses and 22
+  builders (long call/put, verticals, covered call, CSP, collar, protective
+  put, straddles/strangles, iron condor/fly, broken-wing butterfly, ratio
+  spread, jade lizard, calendar, diagonal, PMCC).
+- **Metrics** — breakevens, bounded/**unbounded** max P/L, POP under four
+  labelled measures (delta proxy, RN closed-form, RN Monte Carlo, empirical
+  bootstrap), EV (closed-form edge + RN MC with 95% CI + empirical), expected
+  shortfall, return-on-risk, aggregated greeks, and a convexity proxy. POP is
+  never shown without an EV and tail-loss companion.
+- **Liquidity** — per-strategy score (spread, OI, volume, ATM distance) and a
+  slippage estimate; zero-bid legs are penalized.
+- **Enumeration & optimizer** — `enumerate_candidates` (view-aware, excludes
+  zero-bid legs) and a ranking optimizer with nine objectives; `pop_capped`
+  never ranks an unbounded-risk position first.
+- **Pages 5–6** — Strategy Generator (top-N per objective, radar) and Strategy
+  Optimizer (sortable ranking, EV/POP-vs-risk frontiers).
+
+### M1 — Per-name volatility diagnostics
 
 Builds on the M0 data foundation with the pricing, volatility, and surface
 library plus the first analytical UI pages:
