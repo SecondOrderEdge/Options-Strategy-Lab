@@ -265,6 +265,82 @@ def column_help(columns: object) -> dict[str, Any]:
     }
 
 
+def skew_reading(rr25: float) -> str:
+    """One-line read of the 25-delta risk reversal (the skew sign)."""
+    rr_pts = rr25 * 100
+    if rr25 < -0.005:
+        return (
+            f"Downside-heavy skew (25-delta risk reversal {rr_pts:+.1f} pts): OTM puts are bid "
+            "versus calls — the richness that put credit spreads, put ratios and risk "
+            "reversals are built to harvest."
+        )
+    if rr25 > 0.005:
+        return (
+            f"Upside-heavy skew (25-delta risk reversal {rr_pts:+.1f} pts, atypical for "
+            "equities): calls are richer than puts; the mirror-image structures apply."
+        )
+    return (
+        f"Balanced skew (25-delta risk reversal {rr_pts:+.1f} pts): little directional vol premium."
+    )
+
+
+def trade_reading(
+    *,
+    iv30: float,
+    rv30: float,
+    rv_rank: float | None = None,
+    rr25: float | None = None,
+    term_shape: str | None = None,
+) -> str:
+    """Plain-English "how to read this for trades" framing from live vol signals.
+
+    Educational regime framing only: it names the structures a regime is
+    *consistent with* (premium-selling when vol is rich, long-gamma when cheap,
+    skew-harvesting structures for the skew sign), never a recommendation to
+    enter a trade. Returns a markdown bullet list.
+    """
+    lines: list[str] = []
+    if not (np.isnan(iv30) or np.isnan(rv30)):
+        vrp = (iv30 - rv30) * 100
+        rank_txt = (
+            f", realized vol in the {rv_rank:.0%} percentile of its year"
+            if rv_rank is not None and not np.isnan(rv_rank)
+            else ""
+        )
+        if vrp > 0.5:
+            lines.append(
+                f"**Premium looks rich** — IV30 {iv30:.0%} is above realized {rv30:.0%} "
+                f"(+{vrp:.1f} vol pts{rank_txt}). This regime favors *defined-risk premium "
+                "selling* (credit spreads, iron condors): you collect the richness with a "
+                "capped loss."
+            )
+        elif vrp < -0.5:
+            lines.append(
+                f"**Premium looks cheap** — IV30 {iv30:.0%} is below realized {rv30:.0%} "
+                f"({vrp:.1f} vol pts{rank_txt}). This regime favors *premium buying / long "
+                "gamma* (debit spreads, calendars, long straddles): you pay theta but own "
+                "convexity."
+            )
+        else:
+            lines.append(
+                f"**Vol looks fair** — IV30 {iv30:.0%} is in line with realized {rv30:.0%}; "
+                "no strong premium edge, so let direction and skew drive the structure."
+            )
+    if rr25 is not None and not np.isnan(rr25):
+        lines.append(skew_reading(rr25))
+    if term_shape == "contango":
+        lines.append(
+            "**Term structure in contango** (longer-dated IV higher) — a typical calm regime; "
+            "calendars and diagonals lean on the cheaper near-dated leg."
+        )
+    elif term_shape == "backwardation":
+        lines.append(
+            "**Term structure in backwardation** (near-dated IV higher) — often an event or "
+            "stress signal; near-dated premium is elevated."
+        )
+    return "\n".join(f"- {ln}" for ln in lines)
+
+
 def _load_streamlit_secrets_into_env() -> None:
     """Bridge Streamlit Cloud secrets into env vars so Settings (OSL_*) reads them.
 
