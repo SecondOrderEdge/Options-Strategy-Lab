@@ -79,16 +79,48 @@ with tab_h:
     else:
         p = cal.params
         feller = 2 * p.kappa * p.theta - p.sigma**2
-        st.write(
-            {
-                "v0": round(p.v0, 4),
-                "kappa": round(p.kappa, 4),
-                "theta": round(p.theta, 4),
-                "sigma(vol-of-vol)": round(p.sigma, 4),
-                "rho": round(p.rho, 4),
-                "RMSE (vol pts)": round(cal.rmse_vol * 100, 3),
-                "Feller 2κθ−σ²": round(feller, 4),
-            }
+        inst_vol = float(np.sqrt(max(p.v0, 0.0)))
+        lr_vol = float(np.sqrt(max(p.theta, 0.0)))
+        half_life_days = float(np.log(2) / p.kappa * 365) if p.kappa > 0 else float("inf")
+        rmse_pts = cal.rmse_vol * 100
+        fit_quality = "excellent" if rmse_pts < 0.5 else "acceptable" if rmse_pts < 2 else "poor"
+        trend = (
+            "rise toward it"
+            if p.theta > p.v0
+            else "fall toward it" if p.theta < p.v0 else "stay near it"
+        )
+        if p.rho < -0.05:
+            rho_txt = "spot falls → vol rises (leverage effect), producing a **downside put skew**."
+        elif p.rho > 0.05:
+            rho_txt = "spot and vol rise together, an **upside skew** (atypical for equities)."
+        else:
+            rho_txt = "near zero, so a roughly **symmetric smile** with little skew."
+
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Instantaneous vol √v0", f"{inst_vol:.1%}")
+        c2.metric("Long-run vol √θ", f"{lr_vol:.1%}")
+        c3.metric("Variance shock half-life", f"{half_life_days:.0f} days")
+
+        st.markdown(
+            f"- **v0 = {p.v0:.4f}** — instantaneous variance *now*; the market's current "
+            f"spot vol is √v0 ≈ **{inst_vol:.1%}**.\n"
+            f"- **κ (kappa) = {p.kappa:.4f}** — how fast variance mean-reverts; shocks decay "
+            f"with a half-life of ln2/κ ≈ **{half_life_days:.0f} days** (higher κ = settles "
+            f"faster).\n"
+            f"- **θ (theta) = {p.theta:.4f}** — the long-run variance it reverts to, i.e. a "
+            f"vol of √θ ≈ **{lr_vol:.1%}**; θ is {'above' if p.theta > p.v0 else 'below' if p.theta < p.v0 else 'at'} "
+            f"today's level, so the model expects vol to {trend}.\n"
+            f"- **σ (sigma) = {p.sigma:.4f}** — vol-of-vol; sets smile **curvature** / tail "
+            f"fatness — higher σ lifts both wings relative to ATM.\n"
+            f"- **ρ (rho) = {p.rho:.4f}** — spot/variance correlation; {rho_txt}\n"
+            f"- **RMSE = {rmse_pts:.3f} vol pts** — average gap between the model and market "
+            f"IV across the fitted quotes; this fit is **{fit_quality}**.\n"
+            f"- **Feller 2κθ−σ² = {feller:.4f}** — "
+            + (
+                "≥ 0, so variance stays strictly positive."
+                if feller >= 0
+                else "< 0, so variance can reach zero (stressed fit — see note)."
+            )
         )
         if feller < 0:
             st.caption(
@@ -115,6 +147,10 @@ with tab_m:
     lam = c1.slider("Jump intensity λ", 0.0, 3.0, 1.0)
     mu_j = c2.slider("Mean log-jump μ", -0.3, 0.1, -0.1)
     delta = c3.slider("Jump vol δ", 0.0, 0.4, 0.15)
+    st.caption(
+        "λ = expected number of jumps per year · μ = average jump size in log-return "
+        "(negative = downward crashes) · δ = how dispersed the jump sizes are."
+    )
     params = MertonParams(jump_intensity=lam, jump_mean=mu_j, jump_std=delta)
     near = smiles[0]
     atm_iv = float(near.iv[int(np.argmin(np.abs(near.k)))])
