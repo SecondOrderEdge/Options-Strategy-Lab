@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 
 from app_lib import (
+    column_help,
     load_chain,
     load_underlying_dict,
     page_footer,
@@ -97,7 +98,16 @@ cols = [
     "is_nonstandard",
 ]
 st.subheader(f"{len(view):,} contracts")
-st.dataframe(view[cols], use_container_width=True, hide_index=True)
+st.caption(
+    "Hover any column header for what it means. Greeks: delta ≈ chance ITM, "
+    "theta = daily decay, vega = sensitivity to a 1-point IV move."
+)
+st.dataframe(
+    view[cols],
+    use_container_width=True,
+    hide_index=True,
+    column_config=column_help(cols),
+)
 
 n_flagged = int(view["zero_bid"].sum() + view["wide_spread"].sum())
 if n_flagged:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from app_lib import page_footer, page_header, screen_symbol
+from app_lib import column_help, page_footer, page_header, screen_symbol
 from osl.config import get_settings
 from osl.strategy.optimizer import OBJECTIVES
 
@@ -42,7 +42,17 @@ for i, sym in enumerate(symbols, start=1):
 progress.empty()
 
 if rows:
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    screen_df = pd.DataFrame(rows)
+    st.caption(
+        "Hover any column header for what it means. **IV-RV** > 0 = options rich "
+        "vs realized; **25dRR** < 0 = downside put skew."
+    )
+    st.dataframe(
+        screen_df,
+        use_container_width=True,
+        hide_index=True,
+        column_config=column_help(screen_df.columns),
+    )
 else:
     st.warning("No symbols could be screened.")
 

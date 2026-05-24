@@ -7,6 +7,7 @@ import streamlit as st
 
 from app_lib import (
     build_candidates,
+    column_help,
     garch_forecast,
     load_chain,
     load_log_returns,
@@ -84,20 +85,32 @@ st.dataframe(
     {"measure": [r[0] for r in rows], "POP": [round(r[1], 3) for r in rows]},
     use_container_width=True,
     hide_index=True,
+    column_config=column_help(["measure", "POP"]),
+)
+st.caption(
+    "How to read: **RN** (risk-neutral) rows are what the *market* charges; **P** "
+    "(real-world) rows estimate the *actual* odds from history/GARCH. They legitimately "
+    "differ — the gap is roughly the volatility risk premium. The delta proxy overstates POP."
 )
 
 c1, c2, c3 = st.columns(3)
 c1.metric(
     "EV (RN MC)",
     f"{m.ev_mc.value:,.0f}",
-    help=f"95% CI [{m.ev_mc.ci_low:,.0f}, {m.ev_mc.ci_high:,.0f}]",
+    help=f"Risk-neutral expected P&L (edge vs fair value), Monte Carlo. "
+    f"95% CI [{m.ev_mc.ci_low:,.0f}, {m.ev_mc.ci_high:,.0f}].",
 )
 c2.metric(
     "EV (historical)",
     f"{emp_ev.value:,.0f}",
-    help=f"95% CI [{emp_ev.ci_low:,.0f}, {emp_ev.ci_high:,.0f}]",
+    help=f"Expected P&L under the real-world return distribution (historical bootstrap). "
+    f"95% CI [{emp_ev.ci_low:,.0f}, {emp_ev.ci_high:,.0f}].",
 )
-c3.metric("Expected shortfall (95%)", f"{m.expected_shortfall:,.0f}")
+c3.metric(
+    "Expected shortfall (95%)",
+    f"{m.expected_shortfall:,.0f}",
+    help="Average loss in the worst 5% of outcomes — a tail-risk companion to EV.",
+)
 st.caption(f"GARCH(1,1) annualized vol forecast over {gf.horizon_days}d: {gf.annualized_vol:.1%}")
 
 st.subheader("Risk-neutral density")

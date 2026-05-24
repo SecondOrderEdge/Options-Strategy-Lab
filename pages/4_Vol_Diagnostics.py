@@ -74,6 +74,11 @@ with tab_cone:
     if not history.empty:
         cone = vol_cone(history["close"])
         render_chart(vol_cone_chart(cone))
+        st.caption(
+            "How to read: each band shows the historical range of realized vol for a "
+            "given lookback window (short windows swing wider than long ones). Where the "
+            "current point sits in the band tells you if vol is high or low for that horizon."
+        )
         st.dataframe(cone, use_container_width=True)
     else:
         st.warning("No price history for the cone.")
@@ -87,10 +92,24 @@ with tab_ivrv:
             nearest = min(smiles, key=lambda s: abs(s.T - 30 / 365))
             iv30 = float(nearest.iv[int(np.argmin(np.abs(nearest.k)))])
         c1, c2, c3 = st.columns(3)
-        c1.metric("Realized vol (30D, YZ)", "n/a" if np.isnan(rv_now) else f"{rv_now:.1%}")
-        c2.metric("Implied vol (30D ATM)", "n/a" if np.isnan(iv30) else f"{iv30:.1%}")
+        c1.metric(
+            "Realized vol (30D, YZ)",
+            "n/a" if np.isnan(rv_now) else f"{rv_now:.1%}",
+            help="How much the stock has actually moved over the last 30 days "
+            "(annualized, Yang-Zhang estimator).",
+        )
+        c2.metric(
+            "Implied vol (30D ATM)",
+            "n/a" if np.isnan(iv30) else f"{iv30:.1%}",
+            help="How much the options market expects it to move over the next ~30 days.",
+        )
         if not (np.isnan(rv_now) or np.isnan(iv30)):
-            c3.metric("IV − RV (VRP proxy)", f"{(iv30 - rv_now) * 100:.1f} vol pts")
+            c3.metric(
+                "IV − RV (VRP proxy)",
+                f"{(iv30 - rv_now) * 100:.1f} vol pts",
+                help="Variance-risk-premium proxy: positive means options are priced "
+                "above recent realized movement (sellers are compensated for risk).",
+            )
     else:
         st.warning("No price history for IV/RV.")
 
@@ -101,8 +120,17 @@ if not history.empty:
     if not rv_series.empty:
         st.subheader("Realized-vol rank (proxy until IV history accumulates)")
         c1, c2 = st.columns(2)
-        c1.metric("RV rank", f"{iv_rank(rv_series):.0%}")
-        c2.metric("RV percentile", f"{iv_percentile(rv_series):.0%}")
+        c1.metric(
+            "RV rank",
+            f"{iv_rank(rv_series):.0%}",
+            help="Where today's realized vol sits between its 1-year low (0%) and high "
+            "(100%). High = vol is expensive vs its own history.",
+        )
+        c2.metric(
+            "RV percentile",
+            f"{iv_percentile(rv_series):.0%}",
+            help="Share of the past year that realized vol was below today's level.",
+        )
 
 with st.expander("Model assumptions"):
     st.markdown(

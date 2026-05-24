@@ -7,6 +7,7 @@ import streamlit as st
 
 from app_lib import (
     BACKTEST_SYSTEMS,
+    column_help,
     page_footer,
     page_header,
     render_chart,
@@ -82,16 +83,39 @@ dsr = deflated_sharpe_ratio(
 )
 
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Final equity", f"{s['final_equity']:,.0f}")
-c2.metric("Total return", f"{s['total_return']:.1%}")
-c3.metric("Sharpe (ann.)", f"{s['sharpe']:.2f}")
-c4.metric("Max drawdown", f"{s['max_drawdown']:.1%}")
+c1.metric("Final equity", f"{s['final_equity']:,.0f}", help="Ending account value.")
+c2.metric("Total return", f"{s['total_return']:.1%}", help="Final equity vs starting capital.")
+c3.metric(
+    "Sharpe (ann.)",
+    f"{s['sharpe']:.2f}",
+    help="Annualized return per unit of total volatility (>1 is good). Easily inflated "
+    "by curve-fitting — read it next to DSR.",
+)
+c4.metric(
+    "Max drawdown",
+    f"{s['max_drawdown']:.1%}",
+    help="Largest peak-to-trough equity decline — the worst losing stretch.",
+)
 
 c5, c6, c7, c8 = st.columns(4)
-c5.metric("Sortino", f"{s['sortino']:.2f}")
-c6.metric("PSR (vs 0)", f"{psr:.1%}")
-c7.metric("DSR", f"{dsr:.1%}", help=f"Deflated for {int(n_trials)} trials")
-c8.metric("Trades", f"{int(s['n_trades'])}")
+c5.metric(
+    "Sortino",
+    f"{s['sortino']:.2f}",
+    help="Like Sharpe but penalizes only downside volatility.",
+)
+c6.metric(
+    "PSR (vs 0)",
+    f"{psr:.1%}",
+    help="Probabilistic Sharpe: confidence the true Sharpe exceeds 0, given sample "
+    "size, skew and fat tails.",
+)
+c7.metric(
+    "DSR",
+    f"{dsr:.1%}",
+    help=f"Deflated Sharpe: PSR after deflating for the {int(n_trials)} strategy "
+    "variants tried — guards against picking a lucky backtest.",
+)
+c8.metric("Trades", f"{int(s['n_trades'])}", help="Number of closed trades in the run.")
 if dsr > psr:  # guard: DSR must not exceed PSR
     st.caption("note: DSR ≤ PSR by construction when trials > 1.")
 st.caption(f"Win rate {s['win_rate']:.0%} · profit factor {s['profit_factor']:.2f}")
@@ -101,20 +125,22 @@ render_chart(drawdown_chart(result.equity))
 
 st.subheader("Trades")
 if result.trades:
+    trades_df = pd.DataFrame(
+        [
+            {
+                "entry": t.entry_date.isoformat(),
+                "exit": t.exit_date.isoformat(),
+                "reason": t.reason,
+                "P&L": round(t.pnl, 2),
+            }
+            for t in result.trades
+        ]
+    )
     st.dataframe(
-        pd.DataFrame(
-            [
-                {
-                    "entry": t.entry_date.isoformat(),
-                    "exit": t.exit_date.isoformat(),
-                    "reason": t.reason,
-                    "P&L": round(t.pnl, 2),
-                }
-                for t in result.trades
-            ]
-        ),
+        trades_df,
         use_container_width=True,
         hide_index=True,
+        column_config=column_help(trades_df.columns),
     )
 
 with st.expander("Model assumptions & bias controls"):

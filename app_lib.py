@@ -181,6 +181,90 @@ def render_chart(fig: Any, **kwargs: Any) -> None:
     st.plotly_chart(fig, theme=None, **kwargs)
 
 
+# Plain-English tooltips for dataframe columns across the app, keyed by column
+# name. Shared keys (vega, liquidity, expiration) carry the same meaning wherever
+# they appear, so one table is enough.
+COLUMN_HELP: dict[str, str] = {
+    # --- strategy candidates ---
+    "strategy": "Strategy structure (e.g. vertical, iron condor, straddle).",
+    "expiry": "Expiration date of the (nearest) leg.",
+    "net": "Net cash to open: positive = debit paid, negative = credit received.",
+    "credit?": "True if the trade collects net premium at entry.",
+    "POP (RN)": "Risk-neutral probability of finishing profitable (lognormal at the fitted "
+    "IV). A market-implied odd, not a real-world forecast.",
+    "EV": "Risk-neutral expected P&L from Monte Carlo — edge vs fair value, not a "
+    "real-world profit forecast.",
+    "max_profit": "Largest possible profit at expiry; ∞ if unbounded.",
+    "max_loss": "Largest possible loss at expiry; ∞ for uncovered (naked) risk.",
+    "ES(95%)": "Expected shortfall: average loss in the worst 5% of outcomes (tail risk).",
+    "ROR": "Return on risk: expected value divided by capital at risk.",
+    "theta/day": "Time decay per calendar day, in dollars (positive = collects decay).",
+    "vega": "P&L for a 1 vol-point rise in implied vol (positive = long volatility).",
+    "liquidity": "0-1 blend of bid/ask spread, open interest, volume and ATM distance "
+    "(higher = more tradable).",
+    # --- options chain ---
+    "expiration": "Option expiration date.",
+    "right": "C = call, P = put.",
+    "strike": "Strike price.",
+    "bid": "Best bid (what buyers will pay).",
+    "ask": "Best ask (what sellers want).",
+    "mid": "Midpoint of bid and ask.",
+    "volume": "Contracts traded today.",
+    "open_interest": "Open contracts outstanding — a depth/liquidity gauge.",
+    "iv": "Implied volatility (annualized) backed out from the option's price.",
+    "delta": "∂price/∂spot — roughly the chance of finishing ITM and the hedge ratio.",
+    "gamma": "∂delta/∂spot — how fast delta moves as spot moves.",
+    "theta": "Time decay per day, in dollars per share.",
+    "spread_pct": "Bid/ask spread as a fraction of mid (lower = tighter, cheaper to trade).",
+    "zero_bid": "True if there is no bid — you can't sell it.",
+    "wide_spread": "True if the spread exceeds 10% of mid.",
+    "is_nonstandard": "True for adjusted/non-standard contracts (e.g. post-split deliverable).",
+    # --- SVI surface fit ---
+    "T": "Time to expiry, in years.",
+    "n": "Number of liquid quotes used in the fit.",
+    "rmse_vol_pts": "Fit error in vol points (model IV vs market IV).",
+    "butterfly_free": "True if the smile has no static (butterfly) arbitrage.",
+    "a": "SVI level — overall height of the total-variance curve.",
+    "b": "SVI angle — steepness of the two wings.",
+    "rho": "SVI rotation — skew/asymmetry (negative = downside-heavy).",
+    "m": "SVI shift — horizontal position of the smile's minimum (in log-moneyness).",
+    "sigma": "SVI smoothness — how rounded the ATM bottom of the smile is.",
+    # --- probability-of-profit table ---
+    "measure": "Probability measure & model: RN = market-implied, P = real-world.",
+    "POP": "Probability of profit under that measure.",
+    # --- watchlist screener ---
+    "symbol": "Ticker.",
+    "spot": "Underlying price.",
+    "IV30": "ATM implied vol at ~30 DTE (annualized).",
+    "RV30": "30-day realized (historical) volatility, Yang-Zhang estimator.",
+    "IV-RV": "IV30 minus RV30 — variance-risk-premium proxy (positive = options look rich).",
+    "25dRR": "25-delta risk reversal (call IV − put IV); negative = downside put skew.",
+    "RVrank": "Where current realized vol sits in its 1-year range (0-1).",
+    "RVpct": "Percentile of current realized vol over the past year.",
+    "top_strategy": "Best candidate for this name by the chosen objective.",
+    "top_POP": "Risk-neutral POP of the top strategy.",
+    "top_EV": "RN expected value of the top strategy.",
+    # --- backtest trades ---
+    "entry": "Trade entry date.",
+    "exit": "Trade exit date.",
+    "reason": "Why the position closed (expiry, stop, target, etc.).",
+    "P&L": "Realized profit/loss for the trade, in dollars.",
+}
+
+
+def column_help(columns: object) -> dict[str, Any]:
+    """Build a Streamlit ``column_config`` of header tooltips for known columns.
+
+    Pass anything iterable of column names (a DataFrame's ``.columns`` or a list).
+    Unknown columns are left untouched.
+    """
+    return {
+        str(c): st.column_config.Column(help=COLUMN_HELP[str(c)])
+        for c in cast("Any", columns)
+        if str(c) in COLUMN_HELP
+    }
+
+
 def _load_streamlit_secrets_into_env() -> None:
     """Bridge Streamlit Cloud secrets into env vars so Settings (OSL_*) reads them.
 
