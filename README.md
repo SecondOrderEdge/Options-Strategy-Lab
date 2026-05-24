@@ -8,7 +8,21 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M2 — Strategy engine & optimizer
+## Status: M3 — Payoff & scenario analysis
+
+Adds intermediate-time valuation and scenario tooling on top of the M2 engine:
+
+- **`osl.scenario.payoff`** — mark-to-market `value_at` / `pnl_at` that reprice
+  each leg via BSM at the remaining time with an IV shock (reduces to the
+  terminal payoff at expiry and to the entry value now), plus `payoff_curve`.
+- **`osl.scenario.pnl_surface`** — `pnl_grid` over (spot shock, days-forward) at
+  a fixed IV shock.
+- **`osl.scenario.stress`** — scripted ±1σ/±2σ and earnings-move (with IV crush)
+  scenarios from the strategy's reference IV.
+- **Page 7** — Payoff & Scenario: payoff curve (with a time/IV-shocked overlay),
+  3D P&L surface, and a stress-scenario table.
+
+### M2 — Strategy engine & optimizer
 
 Adds the multi-leg strategy engine on top of M1's pricing/vol/surface library:
 

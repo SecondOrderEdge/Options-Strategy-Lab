@@ -145,6 +145,44 @@ def iv_vs_rv_chart(iv: pd.Series, rv: pd.Series) -> go.Figure:
     return _footer(fig)
 
 
+def payoff_chart(
+    spots: FloatArray,
+    pnl: FloatArray,
+    *,
+    current_spot: float | None = None,
+    breakevens: Sequence[float] = (),
+    title: str = "Payoff at expiry",
+) -> go.Figure:
+    """P&L vs terminal spot, with profit/loss shading and breakeven markers."""
+    fig = go.Figure()
+    pnl_arr = np.asarray(pnl, dtype=float)
+    profit = np.where(pnl_arr >= 0, pnl_arr, np.nan)
+    loss = np.where(pnl_arr < 0, pnl_arr, np.nan)
+    fig.add_trace(
+        go.Scatter(x=spots, y=profit, mode="lines", line={"color": "green"}, name="Profit")
+    )
+    fig.add_trace(go.Scatter(x=spots, y=loss, mode="lines", line={"color": "red"}, name="Loss"))
+    fig.add_hline(y=0, line={"color": "gray", "dash": "dot"})
+    for be in breakevens:
+        fig.add_vline(x=be, line={"color": "blue", "dash": "dash"})
+    if current_spot is not None:
+        fig.add_vline(x=current_spot, line={"color": "black"}, annotation_text="spot")
+    fig.update_layout(title=title, xaxis_title="Terminal spot", yaxis_title="P&L ($)")
+    return _footer(fig)
+
+
+def pnl_surface_chart(
+    spots: FloatArray, days: FloatArray, z: FloatArray, *, title: str = "P&L surface (spot × time)"
+) -> go.Figure:
+    """3D P&L surface across spot (x) and days-forward (y)."""
+    fig = go.Figure(go.Surface(x=spots, y=days, z=z, colorbar={"title": "P&L"}))
+    fig.update_layout(
+        title=title,
+        scene={"xaxis_title": "Spot", "yaxis_title": "Days forward", "zaxis_title": "P&L ($)"},
+    )
+    return _footer(fig)
+
+
 def scatter_chart(
     x: Sequence[float],
     y: Sequence[float],

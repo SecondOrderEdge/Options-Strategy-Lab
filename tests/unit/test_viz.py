@@ -71,6 +71,15 @@ def test_all_charts_build_with_data():
             [0.6, 0.4, 0.3, 0.5, 0.2, 0.8],
             name="Iron Condor",
         ),
+        charts.payoff_chart(
+            np.linspace(80, 120, 41),
+            np.linspace(-500, 500, 41),
+            current_spot=100.0,
+            breakevens=[95.0, 105.0],
+        ),
+        charts.pnl_surface_chart(
+            np.linspace(80, 120, 5), np.array([0.0, 15.0, 30.0]), np.zeros((3, 5))
+        ),
     ]
     for fig in figs:
         assert len(fig.data) >= 1
