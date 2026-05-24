@@ -38,11 +38,21 @@ def build_yfinance(_: Settings | None = None) -> YFinanceProvider:
 
 
 def build_provider(name: str, settings: Settings) -> DataProvider:
-    """Return a provider by name (``"schwab"`` or ``"yfinance"``)."""
+    """Return a provider by name (schwab / yfinance / tradier / marketdata)."""
     if name == "schwab":
         return build_schwab(settings)
     if name == "yfinance":
         return build_yfinance(settings)
+    if name == "tradier":
+        from osl.data.tradier import TradierProvider
+
+        token = settings.tradier_token.get_secret_value() if settings.tradier_token else ""
+        return TradierProvider(token)
+    if name == "marketdata":
+        from osl.data.marketdata import MarketDataProvider
+
+        token = settings.marketdata_token.get_secret_value() if settings.marketdata_token else ""
+        return MarketDataProvider(token)
     raise ValueError(f"unknown provider: {name!r}")
 
 

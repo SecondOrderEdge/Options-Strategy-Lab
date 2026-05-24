@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app_lib import DISCLAIMER
+from app_lib import DISCLAIMER, require_login
 
 st.set_page_config(page_title="Options Strategy Lab", layout="wide")
+require_login()
 
 st.title("Options Strategy Lab")
 st.caption(DISCLAIMER)
@@ -26,6 +27,11 @@ Use the sidebar to navigate:
 - **Options Chain** — filterable chain with computed greeks and liquidity flags.
 - **IV Surface** — SVI fit per expiry, 3D surface/heatmap, arbitrage checks.
 - **Vol Diagnostics** — skew, term structure, volatility cone, IV vs realized.
+- **Strategy Generator / Optimizer** — ranked candidates per objective.
+- **Payoff & Scenario / Probability Lab** — P&L surfaces and POP by measure.
+- **Backtester / Watchlist Screener** — snapshot-driven backtests and screening.
+- **Advanced Models** — Heston, jumps, local vol, PCA (experimental).
+- **Playbook** — a reproducible, signed per-name report.
 - **Assumptions & Disclaimers** — what every model does and does not claim.
 """)
 

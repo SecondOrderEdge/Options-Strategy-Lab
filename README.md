@@ -8,7 +8,23 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M6 — Advanced models (gated)
+## Status: M7 — Institutional polish
+
+The credibility milestone:
+
+- **`osl.report`** — a reproducible per-name **Options Playbook** as HTML (and
+  PDF via the optional `report` extra). Each report carries a provenance footer:
+  git revision, UTC timestamp, and a content **digest** stable across runs for
+  identical inputs. Page 12 offers HTML/PDF downloads.
+- **`osl.data.tradier` / `osl.data.marketdata`** — read-only chain adapters to
+  the canonical schema (offline-tested parsers; injectable HTTP). Selectable via
+  `build_provider` and `OSL_TRADIER_TOKEN` / `OSL_MARKETDATA_TOKEN`.
+- **`osl.auth`** — single-user password gate (`OSL_APP_PASSWORD_HASH`), enforced
+  by `require_login()` in the app.
+- **`osl.bench`** + `.github/workflows/nightly.yml` — a benchmark suite and a
+  nightly full-test + benchmark CI job.
+
+### M6 — Advanced models (gated)
 
 Experimental research models behind `OSL_ENABLE_EXPERIMENTAL`:
 
