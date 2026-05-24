@@ -8,9 +8,28 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M0 — Data Foundation
+## Status: M1 — Per-name volatility diagnostics
 
-This is the first milestone: the data layer and project scaffold. It ships:
+Builds on the M0 data foundation with the pricing, volatility, and surface
+library plus the first analytical UI pages:
+
+- **Pricing** (`osl.pricing`) — vectorized Black-Scholes-Merton price and greeks
+  (Δ, Γ, ν, Θ, ρ, vanna, charm, vomma; theta/day, vega/vol-point), cross-checked
+  against QuantLib and finite differences; implied vol via Jaeckel (`vollib`)
+  with a Brent fallback; put-call parity diagnostics.
+- **Volatility** (`osl.volatility`) — realized-vol estimators (close-to-close,
+  Parkinson, Garman-Klass, Rogers-Satchell, Yang-Zhang), IV rank/percentile,
+  and volatility cones.
+- **Surface** (`osl.surface`) — smile preparation, raw SVI calibration with
+  Gatheral butterfly + calendar no-arbitrage checks, a monotone variance-spline
+  fallback, and Breeden-Litzenberger risk-neutral density.
+- **Viz + pages** (`osl.viz`, `pages/`) — Plotly chart builders and four
+  Streamlit pages (Ticker Overview, Options Chain, IV Surface, Vol Diagnostics)
+  plus an Assumptions & Disclaimers page. Pages are thin shells over `osl.*`.
+
+### M0 — Data Foundation
+
+The data layer and project scaffold:
 
 - **Configuration & logging** — `osl.config` (Pydantic settings, `OSL_`-prefixed
   env vars, secret-safe) and `osl.logging` (structlog).
@@ -53,10 +72,10 @@ mint the first token.
 ## Develop
 
 ```bash
-uv run ruff check osl tests        # lint
-uv run black --check osl tests     # format
-uv run mypy osl                    # strict type-check (library core)
-uv run pytest                      # tests
+uv run ruff check osl tests app.py app_lib.py pages   # lint
+uv run black --check osl tests app.py app_lib.py pages # format
+uv run mypy osl                                        # strict type-check (library core)
+uv run pytest                                          # tests
 ```
 
 Install the git hooks with `uv run pre-commit install`.
@@ -64,7 +83,7 @@ Install the git hooks with `uv run pre-commit install`.
 ## Run the app
 
 ```bash
-uv run streamlit run app.py
+uv run streamlit run app.py   # requires the [ui] extra
 ```
 
 ## Layout
@@ -72,8 +91,14 @@ uv run streamlit run app.py
 ```
 osl/
 ├── config.py, logging.py
-├── data/        # base contracts, schwab/yfinance adapters, cache, snapshots
-└── utils/       # calendars, rates, time/day-count
-app.py           # Streamlit entrypoint (thin UI; no business logic)
-tests/           # unit tests + golden Schwab fixture
+├── data/         # base contracts, schwab/yfinance adapters, cache, snapshots
+├── pricing/      # BSM price + greeks, IV inversion, put-call parity
+├── volatility/   # realized-vol estimators, IV rank/percentile, cones
+├── surface/      # smile prep, SVI fit + no-arb checks, variance spline, RND
+├── viz/          # Plotly chart builders (no Streamlit)
+└── utils/        # calendars, rates, time/day-count
+app.py            # Streamlit entrypoint (multipage home)
+app_lib.py        # shared Streamlit helpers (provider, caching, badge)
+pages/            # thin analytical pages (Overview, Chain, Surface, Vol Diag)
+tests/            # unit tests + golden Schwab fixture
 ```
