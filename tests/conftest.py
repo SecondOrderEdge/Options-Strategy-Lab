@@ -90,6 +90,46 @@ def build_synthetic_chain(
     return chain, exp_for_dte
 
 
+def build_snapshot_history(
+    *,
+    n_days: int = 120,
+    start_spot: float = 100.0,
+    rate: float = 0.0,
+    vol: float = 0.25,
+    drift: float = 0.0,
+    seed: int = 0,
+    expiry_every: int = 14,
+    n_future_expiries: int = 6,
+    strike_step: float = 5.0,
+    n_strikes: int = 25,
+    spread: float = 0.10,
+    lookahead_on: int | None = None,
+) -> list:
+    """Build a list of ``BTDay`` over a GBM underlying path with a fixed strike grid.
+
+    Thin wrapper over :func:`osl.backtest.demo.synthetic_history`; ``lookahead_on``
+    (a day index) stamps that day's chain with a future quote_time to exercise
+    the no-look-ahead guard.
+    """
+    from osl.backtest.demo import synthetic_history
+
+    return synthetic_history(
+        "TST",
+        n_days=n_days,
+        start_spot=start_spot,
+        rate=rate,
+        vol=vol,
+        drift=drift,
+        seed=seed,
+        expiry_every=expiry_every,
+        n_future_expiries=n_future_expiries,
+        strike_step=strike_step,
+        n_strikes=n_strikes,
+        spread=spread,
+        lookahead_on=lookahead_on,
+    )
+
+
 @pytest.fixture
 def fixtures_dir() -> Path:
     return FIXTURES_DIR

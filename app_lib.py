@@ -14,6 +14,11 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from osl.backtest.config import BacktestConfig, FillModel
+from osl.backtest.demo import synthetic_history
+from osl.backtest.engine import BacktestResult, run_backtest
+from osl.backtest.loader import load_snapshot_days
+from osl.backtest.rules import IronCondor1Sigma, LongStraddle, ShortPut16Delta
 from osl.config import Settings, get_settings
 from osl.data.providers import Freshness, build_provider, freshness_badge
 from osl.strategy.enumerate import View, enumerate_candidates
@@ -213,6 +218,39 @@ def screen_symbol(provider_name: str, symbol: str, objective: str) -> dict[str, 
         "top_EV": round(best.metrics.ev_mc.value, 2) if best else None,
         "liquidity": round(best.liquidity.score, 2) if best else None,
     }
+
+
+BACKTEST_SYSTEMS = {
+    "45D 16-delta Short Put": ShortPut16Delta,
+    "45D 1-sigma Iron Condor": IronCondor1Sigma,
+    "30D ATM Long Straddle": LongStraddle,
+}
+
+
+@st.cache_data(ttl=300, show_spinner="Running backtest…")
+def run_system_backtest(
+    provider_name: str,
+    symbol: str,
+    system_name: str,
+    *,
+    fill_model: str,
+    spread_penalty: float,
+    commission: float,
+    capital: float,
+    use_demo: bool,
+) -> BacktestResult:
+    """Run a reference system over store snapshots (or synthetic demo data)."""
+    if use_demo:
+        days = synthetic_history(symbol or "DEMO", n_days=240, seed=7)
+    else:
+        days = load_snapshot_days(get_settings().snapshot_root, symbol)
+    config = BacktestConfig(
+        capital=capital,
+        fill_model=cast(FillModel, fill_model),
+        spread_penalty=spread_penalty,
+        commission_per_contract=commission,
+    )
+    return run_backtest(days, BACKTEST_SYSTEMS[system_name](), config)
 
 
 def page_header(title: str) -> None:
