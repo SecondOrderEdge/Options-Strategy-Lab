@@ -145,6 +145,25 @@ def iv_vs_rv_chart(iv: pd.Series, rv: pd.Series) -> go.Figure:
     return _footer(fig)
 
 
+def equity_curve_chart(equity: pd.Series, *, title: str = "Equity curve") -> go.Figure:
+    """Backtest equity over time."""
+    fig = go.Figure(go.Scatter(x=equity.index, y=equity.to_numpy(), mode="lines", name="Equity"))
+    fig.update_layout(title=title, xaxis_title="Date", yaxis_title="Equity ($)")
+    return _footer(fig)
+
+
+def drawdown_chart(equity: pd.Series, *, title: str = "Drawdown") -> go.Figure:
+    """Underwater (drawdown-from-peak) plot."""
+    eq = equity.to_numpy(dtype=float)
+    peak = np.maximum.accumulate(eq) if eq.size else eq
+    dd = (eq - peak) / peak if eq.size else eq
+    fig = go.Figure(
+        go.Scatter(x=equity.index, y=dd, mode="lines", fill="tozeroy", line={"color": "red"})
+    )
+    fig.update_layout(title=title, xaxis_title="Date", yaxis_title="Drawdown")
+    return _footer(fig)
+
+
 def payoff_chart(
     spots: FloatArray,
     pnl: FloatArray,

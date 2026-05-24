@@ -8,6 +8,8 @@ extra (plotly); the library core never imports it.
 from __future__ import annotations
 
 from osl.viz.charts import (
+    drawdown_chart,
+    equity_curve_chart,
     iv_heatmap,
     iv_surface_3d,
     iv_vs_rv_chart,
@@ -23,6 +25,8 @@ from osl.viz.charts import (
 )
 
 __all__ = [
+    "drawdown_chart",
+    "equity_curve_chart",
     "iv_heatmap",
     "iv_surface_3d",
     "iv_vs_rv_chart",

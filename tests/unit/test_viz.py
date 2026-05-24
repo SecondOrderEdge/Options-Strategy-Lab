@@ -80,6 +80,12 @@ def test_all_charts_build_with_data():
         charts.pnl_surface_chart(
             np.linspace(80, 120, 5), np.array([0.0, 15.0, 30.0]), np.zeros((3, 5))
         ),
+        charts.equity_curve_chart(
+            pd.Series([100.0, 101.0, 99.0], index=pd.date_range("2026-01-01", periods=3))
+        ),
+        charts.drawdown_chart(
+            pd.Series([100.0, 101.0, 99.0], index=pd.date_range("2026-01-01", periods=3))
+        ),
     ]
     for fig in figs:
         assert len(fig.data) >= 1

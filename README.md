@@ -8,7 +8,26 @@ and data provenance.
 > Research and education only — not investment advice. All models have explicit
 > assumptions; read the assumptions before interpreting any output.
 
-## Status: M4 — Probability Lab & Watchlist Screener
+## Status: M5 — Backtester
+
+Adds a snapshot-driven backtester with overfitting-aware statistics:
+
+- **`osl.backtest.engine`** — single-position-per-system event loop that refuses
+  look-ahead (chains stamped after the decision time), settles at expiry, marks
+  to market, and replays deterministically.
+- **`osl.backtest.rules`** — entry/exit systems incl. three references: 45-DTE
+  16Δ short put (close 21 DTE), 45-DTE 1σ iron condor (50% credit or 21 DTE),
+  30-DTE ATM long straddle (100% gain or 14 DTE).
+- **`osl.backtest.fills`** — mid / mid_penalty / worst / spread_frac fill models.
+- **`osl.backtest.metrics`** — Sharpe, Sortino, Calmar, max drawdown, VaR/ES,
+  trade stats, **PSR**, **DSR** (deflated for the number of trials), and **PBO**
+  via combinatorially symmetric cross-validation.
+- **`osl.backtest.loader` / `osl.backtest.demo`** — read the Parquet snapshot
+  store, or generate synthetic demo history.
+- **Page 9** — Backtester: equity/drawdown curves, trades, and **DSR shown
+  beside Sharpe**.
+
+### M4 — Probability Lab & Watchlist Screener
 
 Adds real-world probability tooling and a multi-name screener:
 
