@@ -6,6 +6,7 @@ import pandas as pd
 import streamlit as st
 
 from app_lib import (
+    column_help,
     load_chain,
     load_underlying_dict,
     page_footer,
@@ -76,8 +77,19 @@ else:
     render_chart(iv_heatmap(smiles))
 
 st.subheader("SVI parameters per expiry")
+st.caption(
+    "Each expiry's smile is summarised by 5 raw-SVI numbers (hover the headers for "
+    "each): **a** = level (height), **b** = wing steepness, **ρ** = skew/tilt "
+    "(negative = downside-heavy), **m** = where the smile bottoms, **σ** = how rounded "
+    "the bottom is. **rmse_vol_pts** is the fit error; **butterfly_free** flags arbitrage."
+)
 params_df = pd.DataFrame(rows)
-st.dataframe(params_df, use_container_width=True, hide_index=True)
+st.dataframe(
+    params_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config=column_help(params_df.columns),
+)
 
 cal_free = calendar_arbitrage_free(
     [(s.T, fits[str(s.expiration)]) for s in smiles if str(s.expiration) in fits]

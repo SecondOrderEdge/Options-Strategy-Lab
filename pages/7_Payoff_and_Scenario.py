@@ -73,10 +73,19 @@ if shock_days > 0 or vol_shock != 0:
         name=f"+{shock_days}d, {vol_shock_pts:+d} vol pts",
     )
 render_chart(fig)
+st.caption(
+    "How to read: teal = profit, red = loss at expiry across terminal spot. Gold dashed "
+    "lines mark breakevens; the off-white line is today's spot. The purple dashed curve "
+    "(when shown) is the P&L *before* expiry at your chosen days-forward and IV shock."
+)
 
 st.subheader("P&L surface (spot × time)")
 sg, dg, z = pnl_grid(strategy, spot_shocks=np.linspace(-0.3, 0.3, 31), vol_shock=vol_shock)
 render_chart(pnl_surface_chart(sg, dg, z))
+st.caption(
+    "P&L for every combination of spot (x) and days held (y) — shows how the "
+    "position's value evolves as time passes and the underlying moves."
+)
 
 st.subheader("Stress scenarios")
 iv_crush = st.slider("Earnings IV crush (vol points)", -40, 0, -20) / 100.0

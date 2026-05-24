@@ -38,7 +38,11 @@ except Exception as exc:  # surface provider/credential failures in the UI
     st.stop()
 
 col1, col2, col3 = st.columns(3)
-col1.metric(f"{symbol} last", f"{under['last']:,.2f}")
+col1.metric(
+    f"{symbol} last",
+    f"{under['last']:,.2f}",
+    help="Last traded price of the underlying.",
+)
 
 rate, div = rate_assumptions()
 smiles = prepare_smiles(
@@ -52,7 +56,12 @@ if smiles:
     nearest = min(smiles, key=lambda s: abs(s.T - target_T))
     atm_idx = int(np.argmin(np.abs(nearest.k)))
     iv30 = float(nearest.iv[atm_idx])
-col2.metric("IV30 (ATM, nearest expiry)", "n/a" if np.isnan(iv30) else f"{iv30:.1%}")
+col2.metric(
+    "IV30 (ATM, nearest expiry)",
+    "n/a" if np.isnan(iv30) else f"{iv30:.1%}",
+    help="At-the-money implied vol of the expiry nearest 30 days — the market's "
+    "expected annualized volatility over roughly the next month.",
+)
 
 with col3:
     render_badge(

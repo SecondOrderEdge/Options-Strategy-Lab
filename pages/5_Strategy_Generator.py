@@ -7,6 +7,7 @@ import streamlit as st
 from app_lib import (
     build_candidates,
     candidates_table,
+    column_help,
     page_footer,
     page_header,
     render_chart,
@@ -54,10 +55,21 @@ OBJECTIVE_LABELS = {
     "liquidity_adj_ev": "Liquidity-adjusted EV",
 }
 
+st.caption(
+    "Hover any column header for what it means. Read **POP** next to **EV** and "
+    "**max_loss**: a high probability of profit can still carry negative EV or "
+    "unbounded loss."
+)
 for obj, label in OBJECTIVE_LABELS.items():
     st.subheader(label)
     top = rank(candidates, obj)[:top_n]
-    st.dataframe(candidates_table(top), use_container_width=True, hide_index=True)
+    table = candidates_table(top)
+    st.dataframe(
+        table,
+        use_container_width=True,
+        hide_index=True,
+        column_config=column_help(table.columns),
+    )
 
 # Radar for the single best EV-per-risk candidate.
 best = rank(candidates, "ev_per_risk")[0]
@@ -79,6 +91,11 @@ render_chart(
     radar_chart(
         ["POP", "EV/risk", "Theta", "Vega", "Convexity", "Liquidity"], norm, name=best.strategy.name
     ),
+)
+st.caption(
+    "Each spoke is scaled 0-1 (further out = stronger): POP = chance of profit, "
+    "EV/risk = edge per dollar risked, Theta = decay collected, Vega = volatility "
+    "exposure, Convexity = payoff curvature, Liquidity = tradability."
 )
 
 with st.expander("Model assumptions"):

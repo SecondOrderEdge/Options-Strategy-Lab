@@ -9,6 +9,7 @@ import streamlit as st
 from app_lib import (
     build_candidates,
     candidates_table,
+    column_help,
     page_footer,
     page_header,
     render_chart,
@@ -54,7 +55,17 @@ if not candidates:
 
 ranked = rank(candidates, objective)
 st.subheader(f"Ranking by {objective} ({len(ranked)} candidates)")
-st.dataframe(candidates_table(ranked), use_container_width=True, hide_index=True)
+st.caption(
+    "Hover any column header for what it means. The frontiers below plot EV and "
+    "POP against max loss so you can see the risk/reward trade-off."
+)
+ranked_table = candidates_table(ranked)
+st.dataframe(
+    ranked_table,
+    use_container_width=True,
+    hide_index=True,
+    column_config=column_help(ranked_table.columns),
+)
 
 # Frontiers (bounded-risk candidates only, so axes are finite).
 bounded = [c for c in ranked if not c.metrics.loss_unbounded and math.isfinite(c.metrics.max_loss)]
