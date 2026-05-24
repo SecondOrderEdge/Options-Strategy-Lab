@@ -60,3 +60,62 @@ investment advice. Every output is traceable to a model and a data snapshot.
 Strategy generation/optimization, payoff & scenario analysis, the probability
 lab, GARCH forecasts, PCA/Heston, and the snapshot-driven backtester.
 """)
+
+st.markdown("""
+### Glossary
+
+Plain-English definitions of the terms used across the app. Hover the column
+headers and metric labels on each page for the same explanations in context.
+
+**Volatility**
+
+- **IV (implied volatility)** — the annualized volatility an option's market price implies under Black-Scholes.
+- **IV30** — ATM IV of the expiry nearest 30 days; the market's expected vol over roughly one month.
+- **RV (realized volatility)** — how much the underlying actually moved historically (Yang-Zhang by default).
+- **IV rank / percentile** — where current vol sits in its 1-year range (rank), or the share of the year it was lower (percentile).
+- **IV minus RV (VRP proxy)** — variance-risk-premium proxy; positive means options are priced above realized movement.
+- **Term structure (contango / backwardation)** — ATM IV rising / falling as expiry lengthens.
+- **25-delta risk reversal** — 25-delta call IV minus put IV; negative = downside put skew.
+
+**Probability & expected value**
+
+- **POP** — probability of profit.
+- **Risk-neutral (RN) vs real-world (P)** — RN is market-implied (what options charge); P estimates actual odds from history/GARCH. The gap is roughly the volatility risk premium.
+- **EV (expected value)** — expected P&L. RN EV is edge vs fair value; historical EV uses the real-world return distribution.
+- **Expected shortfall (ES, 95%)** — average loss in the worst 5% of outcomes (tail risk).
+- **Risk-neutral density (RND)** — the distribution of future prices implied by option prices (Breeden-Litzenberger).
+
+**Strategy metrics**
+
+- **Max loss / max profit** — worst / best outcome at expiry; infinity = uncovered (unbounded) risk.
+- **Breakeven** — underlying price where P&L is zero at expiry.
+- **ROR (return on risk)** — expected value divided by capital at risk.
+- **Liquidity score (0-1)** — blend of bid/ask spread, open interest, volume and ATM distance.
+- **Credit vs debit** — net premium collected vs paid to open.
+
+**Greeks**
+
+- **Delta** — sensitivity to spot; roughly the chance of finishing in the money.
+- **Gamma** — how fast delta changes as spot moves.
+- **Theta** — time decay per calendar day.
+- **Vega** — P&L for a 1 vol-point change in IV.
+- **Rho** — sensitivity to a 1.00 change in the interest rate.
+
+**Surface (SVI)**
+
+- **SVI a / b / rho / m / sigma** — raw-SVI smile parameters: level, wing steepness, skew/tilt, location of the minimum, and ATM curvature.
+- **Butterfly / calendar arbitrage** — static no-arbitrage checks; a flagged fit (especially the wings) should not be trusted.
+
+**Advanced models**
+
+- **Heston v0 / kappa / theta / sigma / rho** — current variance, mean-reversion speed, long-run variance, vol-of-vol, and spot/vol correlation.
+- **Feller condition (2·kappa·theta vs sigma squared)** — when satisfied, variance stays strictly positive; a violation signals a stressed fit.
+- **Merton lambda / mu / delta** — jump intensity per year, average jump size, and jump-size dispersion.
+
+**Backtest statistics**
+
+- **Sharpe / Sortino** — return per unit of total / downside volatility.
+- **PSR (probabilistic Sharpe)** — confidence the true Sharpe exceeds zero, adjusting for sample size, skew and fat tails.
+- **DSR (deflated Sharpe)** — PSR deflated for the number of strategy variants tried; guards against a lucky backtest.
+- **Max drawdown** — the largest peak-to-trough decline in equity.
+""")

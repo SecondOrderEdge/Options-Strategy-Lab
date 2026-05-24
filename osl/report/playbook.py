@@ -12,6 +12,24 @@ from html import escape
 
 DISCLAIMER = "Research and education only — not investment advice."
 
+# Plain-English definitions for the top-strategies table, used both as hover
+# tooltips on the column headers and as a visible glossary (so the standalone
+# HTML/PDF report is self-explanatory when shared).
+_COLUMN_GLOSSARY: tuple[tuple[str, str], ...] = (
+    ("Objective", "The ranking goal this strategy topped (e.g. EV per risk, theta per risk)."),
+    ("Strategy", "The option structure (vertical, iron condor, strangle, ...)."),
+    ("Expiry", "Expiration date of the nearest leg."),
+    (
+        "POP (RN)",
+        "Risk-neutral probability of finishing profitable - market-implied, not a forecast.",
+    ),
+    ("EV", "Risk-neutral expected P&L (edge vs fair value), from Monte Carlo."),
+    ("ES(95%)", "Expected shortfall: average loss in the worst 5% of outcomes (tail risk)."),
+    ("Max loss", "Largest possible loss at expiry; shown as infinity (uncovered) for naked risk."),
+    ("Breakevens", "Underlying prices where the position breaks even at expiry."),
+    ("Liquidity", "0-1 tradability score from spread, open interest, volume and ATM distance."),
+)
+
 
 @dataclass(frozen=True)
 class StrategyRow:
@@ -74,7 +92,7 @@ def _fmt_money(x: float) -> str:
 
 def _strategy_rows_html(rows: Sequence[StrategyRow]) -> str:
     if not rows:
-        return "<tr><td colspan='8'>No candidates.</td></tr>"
+        return "<tr><td colspan='9'>No candidates.</td></tr>"
     out = []
     for r in rows:
         max_loss = "∞ (uncovered)" if r.loss_unbounded else _fmt_money(r.max_loss)
@@ -100,6 +118,12 @@ def build_playbook_html(data: PlaybookData) -> str:
     digest = report_digest(data)
     rev = git_revision()
     assumptions = "".join(f"<li>{escape(a)}</li>" for a in data.assumptions)
+    header_cells = "".join(
+        f'<th title="{escape(desc)}">{escape(term)}</th>' for term, desc in _COLUMN_GLOSSARY
+    )
+    glossary = "".join(
+        f"<dt>{escape(term)}</dt><dd>{escape(desc)}</dd>" for term, desc in _COLUMN_GLOSSARY
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +140,9 @@ def build_playbook_html(data: PlaybookData) -> str:
   .metrics span {{ display: inline-block; margin-right: 1.5rem; }}
   footer {{ margin-top: 2rem; color: #888; font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 0.5rem; }}
   .disclaimer {{ color: #b00; font-weight: bold; }}
+  .glossary {{ font-size: 0.8rem; color: #444; }}
+  .glossary dt {{ font-weight: bold; margin-top: 0.4rem; }}
+  .glossary dd {{ margin: 0 0 0 1rem; }}
 </style>
 </head>
 <body>
@@ -132,14 +159,14 @@ def build_playbook_html(data: PlaybookData) -> str:
 
 <h2>Top strategies</h2>
 <table>
-  <thead><tr>
-    <th>Objective</th><th>Strategy</th><th>Expiry</th><th>POP (RN)</th>
-    <th>EV</th><th>ES(95%)</th><th>Max loss</th><th>Breakevens</th><th>Liquidity</th>
-  </tr></thead>
+  <thead><tr>{header_cells}</tr></thead>
   <tbody>
 {_strategy_rows_html(data.strategies)}
   </tbody>
 </table>
+
+<h2>How to read this table</h2>
+<dl class="glossary">{glossary}</dl>
 
 <h2>Model assumptions</h2>
 <ul>{assumptions}</ul>

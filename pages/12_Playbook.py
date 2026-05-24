@@ -29,6 +29,12 @@ except Exception as exc:  # surface provider/credential failures
 
 html = build_playbook_html(data)
 st.success(f"Report digest `{report_digest(data)}` — reproducible for identical inputs.")
+st.caption(
+    "A one-page, shareable summary for this name: current IV level/rank, the surface "
+    "no-arbitrage note, and the top strategy per objective with POP, EV, tail loss and "
+    "liquidity. The report carries its own glossary and a content **digest** — the same "
+    "inputs always produce the same digest, so a report can be verified and reproduced."
+)
 
 st.download_button(
     "Download HTML report",
