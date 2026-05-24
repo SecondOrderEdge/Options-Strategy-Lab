@@ -78,6 +78,7 @@ with tab_h:
         st.error(f"Heston calibration failed: {exc}")
     else:
         p = cal.params
+        feller = 2 * p.kappa * p.theta - p.sigma**2
         st.write(
             {
                 "v0": round(p.v0, 4),
@@ -86,8 +87,15 @@ with tab_h:
                 "sigma(vol-of-vol)": round(p.sigma, 4),
                 "rho": round(p.rho, 4),
                 "RMSE (vol pts)": round(cal.rmse_vol * 100, 3),
+                "Feller 2κθ−σ²": round(feller, 4),
             }
         )
+        if feller < 0:
+            st.caption(
+                "Feller condition violated (2κθ < σ²): variance can reach zero. Common "
+                "when a steep short-dated equity skew forces a high vol-of-vol — read the "
+                "fitted parameters as a stressed best-fit, not a structural estimate."
+            )
         near = smiles[0]
         model_iv = []
         for k in near.strikes:
