@@ -7,6 +7,7 @@ import math
 import streamlit as st
 
 from app_lib import (
+    armed_button,
     build_candidates,
     candidates_table,
     column_help,
@@ -27,9 +28,9 @@ with st.sidebar:
     max_strikes = st.slider("Max strikes per leg", 1, 5, 3)
     objective = st.selectbox("Objective", list(OBJECTIVES), index=2)
     max_loss_cap = st.number_input("Max loss cap ($, 0 = none)", min_value=0, value=0, step=100)
-    go = st.button("Optimize", type="primary")
+    armed = armed_button("Optimize", key="strategy_optimizer", signature=symbol, type="primary")
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol, objective, and filters, then click **Optimize**.")
     page_footer()
     st.stop()

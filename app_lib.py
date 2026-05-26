@@ -181,6 +181,30 @@ def render_chart(fig: Any, **kwargs: Any) -> None:
     st.plotly_chart(fig, theme=None, **kwargs)
 
 
+def armed_button(
+    label: str,
+    *,
+    key: str,
+    signature: object,
+    **button_kwargs: Any,
+) -> bool:
+    """A "latched" action button that survives subsequent slider interactions.
+
+    A plain ``st.button`` returns ``True`` only on the run immediately after
+    the click, so any later slider/select tick reruns the script with the
+    button ``False`` — the page's ``if not go: st.stop()`` gate then fires and
+    the outputs disappear until you click again. This wraps the button to
+    latch the click in ``st.session_state`` under ``key``. The page stays
+    armed across reruns until the ``signature`` changes (e.g. you edit the
+    symbol), at which point the gate re-arms and demands another click.
+    """
+    clicked = st.button(label, **button_kwargs)
+    state_key = f"_armed::{key}"
+    if clicked:
+        st.session_state[state_key] = signature
+    return st.session_state.get(state_key) == signature
+
+
 # Plain-English tooltips for dataframe columns across the app, keyed by column
 # name. Shared keys (vega, liquidity, expiration) carry the same meaning wherever
 # they appear, so one table is enough.

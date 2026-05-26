@@ -6,6 +6,7 @@ import numpy as np
 import streamlit as st
 
 from app_lib import (
+    armed_button,
     build_candidates,
     column_help,
     garch_forecast,
@@ -31,11 +32,11 @@ with st.sidebar:
     view = st.selectbox("View", ["all", "bullish", "bearish", "neutral", "volatile"], index=0)
     dte_low, dte_high = st.slider("DTE range", 1, 180, (20, 60))
     max_strikes = st.slider("Max strikes per leg", 1, 5, 3)
-    go = st.button("Analyze", type="primary")
+    armed = armed_button("Analyze", key="probability_lab", signature=symbol, type="primary")
 
 experimental = settings().enable_experimental
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and filters, then click **Analyze**.")
     page_footer()
     st.stop()

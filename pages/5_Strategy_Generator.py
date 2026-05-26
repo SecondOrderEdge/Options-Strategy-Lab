@@ -5,6 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from app_lib import (
+    armed_button,
     build_candidates,
     candidates_table,
     column_help,
@@ -24,14 +25,14 @@ with st.sidebar:
     dte_low, dte_high = st.slider("DTE range", 1, 180, (20, 60))
     max_strikes = st.slider("Max strikes per leg", 1, 5, 3)
     top_n = st.slider("Top N per objective", 1, 10, 3)
-    go = st.button("Generate", type="primary")
+    armed = armed_button("Generate", key="strategy_generator", signature=symbol, type="primary")
 
 st.info(
     "POP is **not** low risk. Every strategy below shows EV and tail loss (ES) "
     "beside POP; a high-POP credit trade can still have negative EV."
 )
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and filters, then click **Generate**.")
     page_footer()
     st.stop()

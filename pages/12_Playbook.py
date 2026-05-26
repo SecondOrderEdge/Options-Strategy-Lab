@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from app_lib import build_playbook_data, page_footer, page_header, sidebar_controls
+from app_lib import armed_button, build_playbook_data, page_footer, page_header, sidebar_controls
 from osl.report.playbook import build_playbook_html, render_pdf, report_digest
 
 page_header("Options Playbook")
@@ -13,9 +13,9 @@ symbol, provider = sidebar_controls()
 with st.sidebar:
     view = st.selectbox("View", ["all", "bullish", "bearish", "neutral", "volatile"], index=0)
     dte_low, dte_high = st.slider("DTE range", 1, 180, (20, 60))
-    go = st.button("Build report", type="primary")
+    armed = armed_button("Build report", key="playbook", signature=symbol, type="primary")
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and click **Build report** to generate the playbook.")
     page_footer()
     st.stop()

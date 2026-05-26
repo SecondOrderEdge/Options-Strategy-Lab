@@ -7,6 +7,7 @@ import streamlit as st
 
 from app_lib import (
     BACKTEST_SYSTEMS,
+    armed_button,
     column_help,
     page_footer,
     page_header,
@@ -32,7 +33,7 @@ with st.sidebar:
     capital = st.number_input("Capital", min_value=1000, value=100_000, step=10_000)
     n_trials = st.number_input("Parameter trials tried (for DSR)", min_value=1, value=20, step=1)
     use_demo = st.checkbox("Use synthetic demo data", value=True)
-    go = st.button("Run backtest", type="primary")
+    armed = armed_button("Run backtest", key="backtester", signature=symbol, type="primary")
 
 if use_demo:
     st.warning(
@@ -40,7 +41,7 @@ if use_demo:
         "Real backtests need accumulated chain snapshots (run the snapshot worker)."
     )
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and system, then click **Run backtest**.")
     page_footer()
     st.stop()

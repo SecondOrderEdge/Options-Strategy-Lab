@@ -11,6 +11,7 @@ import pandas as pd
 import streamlit as st
 
 from app_lib import (
+    armed_button,
     load_chain,
     load_underlying_dict,
     page_footer,
@@ -41,9 +42,10 @@ if not settings().enable_experimental:
     st.stop()
 
 symbol, provider = sidebar_controls()
-go = st.sidebar.button("Load", type="primary")
+with st.sidebar:
+    armed = armed_button("Load", key="advanced_models", signature=symbol, type="primary")
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and click **Load**.")
     page_footer()
     st.stop()

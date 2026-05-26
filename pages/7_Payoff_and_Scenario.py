@@ -6,7 +6,14 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from app_lib import build_candidates, page_footer, page_header, render_chart, sidebar_controls
+from app_lib import (
+    armed_button,
+    build_candidates,
+    page_footer,
+    page_header,
+    render_chart,
+    sidebar_controls,
+)
 from osl.scenario.payoff import payoff_curve
 from osl.scenario.pnl_surface import pnl_grid
 from osl.scenario.stress import stress_scenarios
@@ -19,9 +26,11 @@ with st.sidebar:
     view = st.selectbox("View", ["all", "bullish", "bearish", "neutral", "volatile"], index=0)
     dte_low, dte_high = st.slider("DTE range", 1, 180, (20, 60))
     max_strikes = st.slider("Max strikes per leg", 1, 5, 3)
-    go = st.button("Build candidates", type="primary")
+    armed = armed_button(
+        "Build candidates", key="payoff_scenario", signature=symbol, type="primary"
+    )
 
-if not (go and symbol):
+if not (armed and symbol):
     st.caption("Set a symbol and filters, then click **Build candidates** and pick one.")
     page_footer()
     st.stop()

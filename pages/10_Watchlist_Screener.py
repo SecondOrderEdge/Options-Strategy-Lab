@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from app_lib import column_help, page_footer, page_header, screen_symbol
+from app_lib import armed_button, column_help, page_footer, page_header, screen_symbol
 from osl.config import get_settings
 from osl.strategy.optimizer import OBJECTIVES
 
@@ -21,11 +21,15 @@ with st.sidebar:
         index=0 if cfg.default_provider == "schwab" else 1,
     )
     objective = st.selectbox("Top-strategy objective", list(OBJECTIVES), index=2)
-    go = st.button("Screen", type="primary")
+    symbols = sorted({s.strip().upper() for s in raw.replace(",", " ").split() if s.strip()})
+    armed = armed_button(
+        "Screen",
+        key="watchlist_screener",
+        signature=(tuple(symbols), objective, provider),
+        type="primary",
+    )
 
-symbols = sorted({s.strip().upper() for s in raw.replace(",", " ").split() if s.strip()})
-
-if not (go and symbols):
+if not (armed and symbols):
     st.caption("Enter symbols and click **Screen**.")
     page_footer()
     st.stop()
