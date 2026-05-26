@@ -23,7 +23,7 @@ from osl.backtest.loader import load_snapshot_days
 from osl.backtest.rules import IronCondor1Sigma, LongStraddle, ShortPut16Delta
 from osl.config import Settings, get_settings
 from osl.data.providers import Freshness, build_provider, freshness_badge
-from osl.report.playbook import PlaybookData, StrategyRow
+from osl.report.playbook import LegRow, PlaybookData, StrategyRow
 from osl.strategy.enumerate import View, enumerate_candidates
 from osl.strategy.liquidity import strategy_liquidity
 from osl.strategy.metrics import compute_metrics
@@ -639,6 +639,18 @@ def build_playbook_data(
             break
         best = rank(candidates, obj)[0]
         m = best.metrics
+        legs = tuple(
+            LegRow(
+                side="Sell" if leg.sign < 0 else "Buy",
+                quantity=int(leg.quantity),
+                right=leg.right,
+                strike=float(leg.strike),
+                expiry=leg.expiration.isoformat(),
+                premium=float(leg.premium),
+                iv=float(leg.iv),
+            )
+            for leg in best.strategy.legs
+        )
         rows.append(
             StrategyRow(
                 name=best.strategy.name,
@@ -651,6 +663,8 @@ def build_playbook_data(
                 loss_unbounded=m.loss_unbounded,
                 liquidity=best.liquidity.score,
                 breakevens=m.breakevens,
+                net_debit=float(best.strategy.net_debit),
+                legs=legs,
             )
         )
 

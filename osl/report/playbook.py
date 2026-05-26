@@ -18,6 +18,10 @@ DISCLAIMER = "Research and education only — not investment advice."
 _COLUMN_GLOSSARY: tuple[tuple[str, str], ...] = (
     ("Objective", "The ranking goal this strategy topped (e.g. EV per risk, theta per risk)."),
     ("Strategy", "The option structure (vertical, iron condor, strangle, ...)."),
+    (
+        "Net",
+        "Net cash at entry, in dollars: debit (paid) is positive, credit (received) is negative.",
+    ),
     ("Expiry", "Expiration date of the nearest leg."),
     (
         "POP (RN)",
@@ -29,6 +33,29 @@ _COLUMN_GLOSSARY: tuple[tuple[str, str], ...] = (
     ("Breakevens", "Underlying prices where the position breaks even at expiry."),
     ("Liquidity", "0-1 tradability score from spread, open interest, volume and ATM distance."),
 )
+
+_TICKET_HEADERS: tuple[str, ...] = (
+    "Action",
+    "Qty",
+    "Right",
+    "Strike",
+    "Expiry",
+    "Premium (mid)",
+    "IV",
+)
+
+
+@dataclass(frozen=True)
+class LegRow:
+    """One leg of a strategy, in the form needed to actually place the trade."""
+
+    side: str  # "Buy" or "Sell"
+    quantity: int
+    right: str  # "C" or "P"
+    strike: float
+    expiry: str  # ISO date
+    premium: float  # per-share mid
+    iv: float
 
 
 @dataclass(frozen=True)
@@ -43,6 +70,10 @@ class StrategyRow:
     loss_unbounded: bool
     liquidity: float
     breakevens: tuple[float, ...]
+    # Execution detail. Defaults preserve back-compat with older callers/tests
+    # that did not carry leg-level data.
+    net_debit: float = 0.0
+    legs: tuple[LegRow, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -90,9 +121,18 @@ def _fmt_money(x: float) -> str:
     return "∞ (uncovered)" if x == float("-inf") else f"{x:,.2f}"
 
 
+def _fmt_net(x: float) -> str:
+    """Format net entry cash: positive = debit, negative = credit."""
+    if x > 0:
+        return f"${x:,.2f} debit"
+    if x < 0:
+        return f"${abs(x):,.2f} credit"
+    return "$0.00"
+
+
 def _strategy_rows_html(rows: Sequence[StrategyRow]) -> str:
     if not rows:
-        return "<tr><td colspan='9'>No candidates.</td></tr>"
+        return "<tr><td colspan='10'>No candidates.</td></tr>"
     out = []
     for r in rows:
         max_loss = "∞ (uncovered)" if r.loss_unbounded else _fmt_money(r.max_loss)
@@ -101,6 +141,7 @@ def _strategy_rows_html(rows: Sequence[StrategyRow]) -> str:
             "<tr>"
             f"<td>{escape(r.objective)}</td>"
             f"<td>{escape(r.name)}</td>"
+            f"<td>{escape(_fmt_net(r.net_debit))}</td>"
             f"<td>{escape(r.expiry)}</td>"
             f"<td>{r.pop_rn:.1%}</td>"
             f"<td>{r.ev:,.0f}</td>"
@@ -111,6 +152,39 @@ def _strategy_rows_html(rows: Sequence[StrategyRow]) -> str:
             "</tr>"
         )
     return "\n".join(out)
+
+
+def _trade_tickets_html(rows: Sequence[StrategyRow]) -> str:
+    """Per-strategy execution blocks: the exact legs (side, qty, right, strike, expiry)."""
+    if not rows or not any(r.legs for r in rows):
+        return ""
+    headers = "".join(f"<th>{escape(h)}</th>" for h in _TICKET_HEADERS)
+    blocks = []
+    for r in rows:
+        if not r.legs:
+            continue
+        leg_rows = "".join(
+            "<tr>"
+            f"<td>{escape(leg.side)}</td>"
+            f"<td>{leg.quantity}</td>"
+            f"<td>{escape(leg.right)}</td>"
+            f"<td>{leg.strike:,.2f}</td>"
+            f"<td>{escape(leg.expiry)}</td>"
+            f"<td>{leg.premium:,.2f}</td>"
+            f"<td>{leg.iv:.1%}</td>"
+            "</tr>"
+            for leg in r.legs
+        )
+        bes = ", ".join(f"{b:,.2f}" for b in r.breakevens) or "—"
+        blocks.append(
+            '<div class="ticket">'
+            f"<h3>{escape(r.objective)}: {escape(r.name)} — {escape(r.expiry)}</h3>"
+            f"<table><thead><tr>{headers}</tr></thead><tbody>{leg_rows}</tbody></table>"
+            f"<p><b>Net:</b> {escape(_fmt_net(r.net_debit))} &nbsp;·&nbsp; "
+            f"<b>Breakevens:</b> {escape(bes)}</p>"
+            "</div>"
+        )
+    return "\n".join(blocks)
 
 
 def build_playbook_html(data: PlaybookData) -> str:
@@ -130,19 +204,29 @@ def build_playbook_html(data: PlaybookData) -> str:
 <meta charset="utf-8"/>
 <title>Options Playbook — {escape(data.symbol)}</title>
 <style>
-  body {{ font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 2rem; color: #1a1a1a; }}
+  /* Explicit white background so the report stays readable when embedded
+     inside a dark host page (e.g. the Streamlit app) and when exported to PDF. */
+  body {{ font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 2rem; color: #1a1a1a; background: #ffffff; }}
   h1 {{ margin-bottom: 0; }}
   .sub {{ color: #666; font-size: 0.9rem; }}
   table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.85rem; }}
-  th, td {{ border: 1px solid #ddd; padding: 6px 8px; text-align: right; }}
+  th, td {{ border: 1px solid #ddd; padding: 6px 8px; text-align: right; color: #1a1a1a; background: #ffffff; }}
   th {{ background: #f4f4f4; }}
-  td:nth-child(1), td:nth-child(2), td:nth-child(3) {{ text-align: left; }}
+  /* Objective (1), Strategy (2), Expiry (4) are left-aligned text columns. */
+  td:nth-child(1), td:nth-child(2), td:nth-child(4) {{ text-align: left; }}
   .metrics span {{ display: inline-block; margin-right: 1.5rem; }}
   footer {{ margin-top: 2rem; color: #888; font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 0.5rem; }}
   .disclaimer {{ color: #b00; font-weight: bold; }}
   .glossary {{ font-size: 0.8rem; color: #444; }}
   .glossary dt {{ font-weight: bold; margin-top: 0.4rem; }}
   .glossary dd {{ margin: 0 0 0 1rem; }}
+  .ticket {{ margin: 1rem 0 1.5rem; padding: 0.5rem 1rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; }}
+  .ticket h3 {{ margin: 0.25rem 0 0.5rem; font-size: 1rem; }}
+  .ticket table {{ font-size: 0.8rem; margin: 0.5rem 0; }}
+  /* Inside the ticket, every column is plain text — left-align side/right/expiry
+     and right-align the numeric strike/premium/iv columns. */
+  .ticket td:nth-child(1), .ticket td:nth-child(3), .ticket td:nth-child(5) {{ text-align: left; }}
+  .ticket td:nth-child(2), .ticket td:nth-child(4), .ticket td:nth-child(6), .ticket td:nth-child(7) {{ text-align: right; }}
 </style>
 </head>
 <body>
@@ -164,6 +248,10 @@ def build_playbook_html(data: PlaybookData) -> str:
 {_strategy_rows_html(data.strategies)}
   </tbody>
 </table>
+
+<h2>Trade tickets</h2>
+<p class="sub">Exact legs for each top strategy — side, quantity, right (C/P), strike and expiry — so the trade can be entered directly.</p>
+{_trade_tickets_html(data.strategies)}
 
 <h2>How to read this table</h2>
 <dl class="glossary">{glossary}</dl>
