@@ -16,12 +16,14 @@ from app_lib import (
     rate_assumptions,
     render_chart,
     sidebar_controls,
+    trade_reading,
 )
 from osl.surface.prepare import prepare_smiles
 from osl.surface.svi import fit_svi
 from osl.viz.charts import skew_chart, term_structure_chart, vol_cone_chart
 from osl.volatility.ranks import iv_percentile, iv_rank, vol_cone
 from osl.volatility.realized import realized_vol
+from osl.volatility.skew import delta_skew_25
 
 page_header("Vol Diagnostics")
 symbol, provider = sidebar_controls()
@@ -43,6 +45,44 @@ except Exception as exc:
 spot = float(under["mark"] or under["last"])
 rate, div = rate_assumptions()
 smiles = prepare_smiles(chain, spot=spot, rate=rate, dividend_yield=div)
+
+# Headline synthesis: what the vol picture implies for trade structure.
+st.subheader("Reading this for trades")
+iv30_now = float("nan")
+rr25_now = float("nan")
+if smiles:
+    near30 = min(smiles, key=lambda s: abs(s.T - 30 / 365))
+    iv30_now = float(near30.iv[int(np.argmin(np.abs(near30.k)))])
+    with contextlib.suppress(Exception):  # 25Δ may not be spanned on a thin smile
+        ds = delta_skew_25(near30)
+        iv30_now, rr25_now = ds.atm_iv, ds.risk_reversal_25
+rv30_now = float("nan")
+rv_rank_now: float | None = None
+if not history.empty:
+    s30 = realized_vol(history, method="yz", window=30).dropna()
+    if not s30.empty:
+        rv30_now = float(s30.iloc[-1])
+    s20 = realized_vol(history, method="yz", window=20).dropna()
+    if not s20.empty:
+        rv_rank_now = iv_rank(s20)
+term_shape: str | None = None
+if len(smiles) > 1:
+    by_t = sorted(smiles, key=lambda s: s.T)
+    atm_short = float(by_t[0].iv[int(np.argmin(np.abs(by_t[0].k)))])
+    atm_long = float(by_t[-1].iv[int(np.argmin(np.abs(by_t[-1].k)))])
+    term_shape = "contango" if atm_long > atm_short else "backwardation"
+note = trade_reading(
+    iv30=iv30_now, rv30=rv30_now, rv_rank=rv_rank_now, rr25=rr25_now, term_shape=term_shape
+)
+if note:
+    st.markdown(note)
+    st.caption(
+        "Regime framing for education, not a recommendation. Confirm the odds in the "
+        "**Probability Lab** (real-world vs risk-neutral POP/EV) and size candidates in the "
+        "**Strategy Generator** before acting."
+    )
+else:
+    st.caption("Not enough data to summarize the vol regime.")
 
 tab_skew, tab_term, tab_cone, tab_ivrv = st.tabs(["Skew", "Term structure", "Vol cone", "IV vs RV"])
 

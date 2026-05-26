@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+
 import pandas as pd
 import streamlit as st
 
@@ -14,10 +16,12 @@ from app_lib import (
     rate_assumptions,
     render_chart,
     sidebar_controls,
+    skew_reading,
 )
 from osl.surface.prepare import prepare_smiles
 from osl.surface.svi import SVIParams, calendar_arbitrage_free, fit_svi
 from osl.viz.charts import iv_heatmap, iv_surface_3d, skew_chart
+from osl.volatility.skew import delta_skew_25
 
 page_header("IV Surface")
 symbol, provider = sidebar_controls()
@@ -71,6 +75,11 @@ for smile in smiles:
 view = st.radio("View", ["Skew (2D)", "Surface (3D)", "Heatmap"], horizontal=True)
 if view == "Skew (2D)":
     render_chart(skew_chart(smiles, fits))
+    near30 = min(smiles, key=lambda s: abs(s.T - 30 / 365))
+    with contextlib.suppress(Exception):  # 25Δ may not be spanned on a thin smile
+        st.caption(
+            "Reading this for trades: " + skew_reading(delta_skew_25(near30).risk_reversal_25)
+        )
 elif view == "Surface (3D)":
     render_chart(iv_surface_3d(smiles))
 else:
