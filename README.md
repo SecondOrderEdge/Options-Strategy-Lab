@@ -204,14 +204,21 @@ uv run streamlit run app.py   # requires the [ui] extra
 ```
 osl/
 ├── config.py, logging.py
-├── data/         # base contracts, schwab/yfinance adapters, cache, snapshots
-├── pricing/      # BSM price + greeks, IV inversion, put-call parity
-├── volatility/   # realized-vol estimators, IV rank/percentile, cones
-├── surface/      # smile prep, SVI fit + no-arb checks, variance spline, RND
+├── auth.py       # single-user password gate for the app
+├── bench.py      # benchmark suite (nightly CI)
+├── data/         # base contracts; schwab, yfinance, tradier and marketdata adapters; cache; snapshots; snapshot worker
+├── pricing/      # BSM price + greeks, IV inversion, put-call parity, Monte Carlo
+├── volatility/   # realized-vol estimators, IV rank/percentile, cones, GARCH, skew, VRP
+├── surface/      # smile prep, SVI fit + no-arb checks, variance spline, RND, PCA
+├── strategy/     # legs, 22 strategy builders, metrics, liquidity, enumeration, optimizer
+├── scenario/     # payoff curves, P&L surface, stress scenarios
+├── backtest/     # snapshot-driven engine, rules, fill models, metrics (PSR/DSR/PBO), loader, demo data
+├── models/       # experimental Heston, Merton jump-diffusion, Dupire local vol
+├── report/       # per-name Options Playbook (HTML/PDF)
 ├── viz/          # Plotly chart builders (no Streamlit)
 └── utils/        # calendars, rates, time/day-count
 app.py            # Streamlit entrypoint (multipage home)
 app_lib.py        # shared Streamlit helpers (provider, caching, badge)
-pages/            # thin analytical pages (Overview, Chain, Surface, Vol Diag)
+pages/            # 12 analytical pages (1 Ticker Overview to 12 Playbook) plus Assumptions & Disclaimers
 tests/            # unit tests + golden Schwab fixture
 ```
